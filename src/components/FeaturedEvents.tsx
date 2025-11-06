@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
 import { Calendar, MapPin, Hotel } from "lucide-react";
@@ -82,9 +83,11 @@ const FeaturedEvents = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-6 pt-0">
-                <Button className="w-full" variant="default">
-                  Ver Detalles
-                </Button>
+                <Link to={`/producto/${event.id}`} className="w-full">
+                  <Button className="w-full" variant="default">
+                    Ver Detalles
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           ))}
