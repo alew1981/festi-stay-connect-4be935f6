@@ -3,16 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Ticket, Hotel, ExternalLink, ShoppingCart, ArrowUpDown } from "lucide-react";
+import { Calendar, MapPin, Users, Ticket, Hotel, ExternalLink, ShoppingCart, ArrowUpDown, Star } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import electronicImg from "@/assets/festival-electronic.jpg";
-
-// Event ID para testing - en producción vendría del parámetro de la URL
-const TEST_EVENT_ID = "1073965188";
 
 // Mock data para hoteles - en producción vendría de la API
 const mockHotels = [
@@ -41,15 +39,17 @@ const Producto = () => {
   const [hotelNights, setHotelNights] = useState(3);
   const [sortBy, setSortBy] = useState("distance");
   const [expandedHotels, setExpandedHotels] = useState<{ [key: number]: boolean }>({});
+  const [filterStars, setFilterStars] = useState("all");
+  const [filterPrice, setFilterPrice] = useState("all");
 
-  // Obtener detalles del evento
+  // Obtener detalles del evento usando el ID de la URL
   const { data: eventDetails, isLoading: isLoadingEvent } = useQuery({
-    queryKey: ["event", TEST_EVENT_ID],
+    queryKey: ["event", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("ticketmaster_event_details")
-        .select("event_id, event_name, venue_name, venue_city, event_date, venue_address, event_url")
-        .eq("event_id", TEST_EVENT_ID)
+        .from("event_list_page_view")
+        .select("*")
+        .eq("event_id", id)
         .single();
       
       if (error) throw error;
@@ -59,12 +59,12 @@ const Producto = () => {
 
   // Obtener precios de tickets
   const { data: ticketPrices, isLoading: isLoadingTickets } = useQuery({
-    queryKey: ["tickets", TEST_EVENT_ID],
+    queryKey: ["tickets", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ticketmaster_event_prices")
         .select("*")
-        .eq("event_id", TEST_EVENT_ID)
+        .eq("event_id", id)
         .order("display_order", { ascending: true });
       
       if (error) throw error;
@@ -100,7 +100,17 @@ const Producto = () => {
     }));
   };
 
-  const sortedHotels = [...festival.hotels].sort((a, b) => {
+  const filteredHotels = mockHotels
+    .filter(hotel => filterStars === "all" || hotel.stars === Number(filterStars))
+    .filter(hotel => {
+      if (filterPrice === "all") return true;
+      if (filterPrice === "budget") return hotel.pricePerNight < 150;
+      if (filterPrice === "mid") return hotel.pricePerNight >= 150 && hotel.pricePerNight < 250;
+      if (filterPrice === "luxury") return hotel.pricePerNight >= 250;
+      return true;
+    });
+
+  const sortedHotels = [...filteredHotels].sort((a, b) => {
     if (sortBy === "price-asc") return a.pricePerNight - b.pricePerNight;
     if (sortBy === "price-desc") return b.pricePerNight - a.pricePerNight;
     if (sortBy === "distance") return a.distance - b.distance;
@@ -154,13 +164,15 @@ const Producto = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8 mt-20">
+        <Breadcrumbs />
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contenido principal */}
           <div className="lg:col-span-2 space-y-8">
             {/* Festival Info */}
             <div className="relative h-96 rounded-lg overflow-hidden">
               <img
-                src={electronicImg}
+                src={eventDetails.image_standard_url || electronicImg}
                 alt={eventDetails.event_name}
                 className="w-full h-full object-cover"
               />
@@ -269,8 +281,7 @@ const Producto = () => {
                     <Hotel className="h-6 w-6" />
                     Hoteles Recomendados
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex flex-wrap items-center gap-2">
                     <Select value={sortBy} onValueChange={setSortBy}>
                       <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Ordenar por" />
@@ -280,6 +291,30 @@ const Producto = () => {
                         <SelectItem value="price-asc">Precio: Menor a Mayor</SelectItem>
                         <SelectItem value="price-desc">Precio: Mayor a Menor</SelectItem>
                         <SelectItem value="stars">Estrellas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={filterStars} onValueChange={setFilterStars}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Estrellas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="3">3 <Star className="inline h-3 w-3" /></SelectItem>
+                        <SelectItem value="4">4 <Star className="inline h-3 w-3" /></SelectItem>
+                        <SelectItem value="5">5 <Star className="inline h-3 w-3" /></SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={filterPrice} onValueChange={setFilterPrice}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Precio" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="budget">Económico (&lt;€150)</SelectItem>
+                        <SelectItem value="mid">Medio (€150-250)</SelectItem>
+                        <SelectItem value="luxury">Lujo (€250+)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

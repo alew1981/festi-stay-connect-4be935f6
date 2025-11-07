@@ -28,18 +28,25 @@ const Navbar = () => {
               Inicio
             </NavLink>
             <NavLink
-              to="/destinos"
+              to="/eventos"
               className="text-foreground/80 hover:text-foreground transition-colors"
               activeClassName="text-foreground font-semibold"
             >
-              Destinos
+              Eventos
             </NavLink>
             <NavLink
               to="/generos"
               className="text-foreground/80 hover:text-foreground transition-colors"
               activeClassName="text-foreground font-semibold"
             >
-              Géneros
+              Artistas
+            </NavLink>
+            <NavLink
+              to="/destinos"
+              className="text-foreground/80 hover:text-foreground transition-colors"
+              activeClassName="text-foreground font-semibold"
+            >
+              Destinos
             </NavLink>
             <NavLink
               to="/about"
@@ -48,9 +55,6 @@ const Navbar = () => {
             >
               Sobre Nosotros
             </NavLink>
-            <Button variant="default" size="sm">
-              Buscar Eventos
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -75,12 +79,12 @@ const Navbar = () => {
               Inicio
             </NavLink>
             <NavLink
-              to="/destinos"
+              to="/eventos"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2"
               activeClassName="text-foreground font-semibold"
               onClick={() => setIsMenuOpen(false)}
             >
-              Destinos
+              Eventos
             </NavLink>
             <NavLink
               to="/generos"
@@ -88,7 +92,15 @@ const Navbar = () => {
               activeClassName="text-foreground font-semibold"
               onClick={() => setIsMenuOpen(false)}
             >
-              Géneros
+              Artistas
+            </NavLink>
+            <NavLink
+              to="/destinos"
+              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
+              activeClassName="text-foreground font-semibold"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Destinos
             </NavLink>
             <NavLink
               to="/about"
@@ -98,9 +110,6 @@ const Navbar = () => {
             >
               Sobre Nosotros
             </NavLink>
-            <Button variant="default" size="sm" className="w-full">
-              Buscar Eventos
-            </Button>
           </div>
         )}
       </div>

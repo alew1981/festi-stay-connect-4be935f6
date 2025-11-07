@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { Music, Hotel, Heart } from "lucide-react";
 
 const About = () => {
@@ -9,6 +10,7 @@ const About = () => {
       
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
+          <Breadcrumbs />
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">

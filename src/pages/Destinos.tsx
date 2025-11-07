@@ -1,66 +1,215 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { MapPin } from "lucide-react";
-
-const destinations = [
-  { id: 1, name: "Barcelona", events: 45, image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800" },
-  { id: 2, name: "Madrid", events: 38, image: "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800" },
-  { id: 3, name: "Valencia", events: 28, image: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=800" },
-  { id: 4, name: "Sevilla", events: 22, image: "https://images.unsplash.com/photo-1560969184-10fe8719e047?w=800" },
-  { id: 5, name: "Bilbao", events: 19, image: "https://images.unsplash.com/photo-1544988807-ee6c7c11b633?w=800" },
-  { id: 6, name: "Málaga", events: 25, image: "https://images.unsplash.com/photo-1562922294-f0f6f21bcba4?w=800" },
-];
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Calendar, MapPin, Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Destinos = () => {
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: cities, isLoading: isLoadingCities } = useQuery({
+    queryKey: ["cities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("city_summary")
+        .select("*")
+        .gt("upcoming_events", 0)
+        .order("upcoming_events", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: cityEvents, isLoading: isLoadingEvents } = useQuery({
+    queryKey: ["cityEvents", selectedCity],
+    queryFn: async () => {
+      if (!selectedCity) return null;
+      
+      const { data, error } = await supabase
+        .from("event_list_page_view")
+        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price, main_attraction_name")
+        .eq("venue_city", selectedCity)
+        .gt("event_date", new Date().toISOString())
+        .order("event_date", { ascending: true })
+        .limit(50);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCity,
+  });
+
+  const filteredCities = cities?.filter(city =>
+    city.city_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const selectedCityData = cities?.find(c => c.city_name === selectedCity);
+
+  if (selectedCity && selectedCityData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        
+        <main className="container mx-auto px-4 py-8 mt-20">
+          <Breadcrumbs />
+          
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedCity(null)}
+            className="mb-6"
+          >
+            ← Volver a Destinos
+          </Button>
+
+          <div className="mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold mb-2">{selectedCityData.city_name}</h1>
+            <p className="text-muted-foreground text-lg">
+              {selectedCityData.upcoming_events} eventos próximos
+            </p>
+          </div>
+
+          {isLoadingEvents ? (
+            <div className="text-center py-12">Cargando eventos...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cityEvents?.map((event) => {
+                const eventDate = new Date(event.event_date);
+                const formattedDate = eventDate.toLocaleDateString('es-ES', { 
+                  day: 'numeric', 
+                  month: 'short',
+                  year: 'numeric'
+                });
+
+                return (
+                  <Card key={event.event_id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="h-48 overflow-hidden">
+                      <img
+                        src={event.image_standard_url || "/placeholder.svg"}
+                        alt={event.event_name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-bold text-lg mb-2 line-clamp-2">{event.event_name}</h3>
+                      {event.main_attraction_name && (
+                        <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
+                      )}
+                      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          <span>{formattedDate}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-secondary" />
+                          <span>{event.venue_name}</span>
+                        </div>
+                      </div>
+                      {event.min_price && (
+                        <div className="mt-3">
+                          <Badge variant="secondary">Desde €{Number(event.min_price).toFixed(2)}</Badge>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="p-4 pt-0">
+                      <Button asChild className="w-full">
+                        <Link to={`/producto/${event.event_id}`}>Ver Detalles</Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Explora Destinos
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Descubre los mejores festivales y conciertos en las ciudades más vibrantes
-            </p>
-          </div>
+      <main className="container mx-auto px-4 py-8 mt-20">
+        <Breadcrumbs />
+        
+        <div className="mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Destinos</h1>
+          <p className="text-muted-foreground text-lg">
+            Explora eventos en las mejores ciudades de España
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {destinations.map((destination) => (
-              <Card 
-                key={destination.id}
-                className="overflow-hidden border-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar destinos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {isLoadingCities ? (
+          <div className="text-center py-12">Cargando destinos...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCities?.map((city) => (
+              <Card
+                key={city.city_slug}
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => setSelectedCity(city.city_name)}
               >
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={destination.image}
-                    alt={destination.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-2xl font-bold text-white mb-2">
-                      {destination.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-white/90">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-sm">{destination.events} eventos disponibles</span>
-                    </div>
-                  </div>
-                </div>
                 <CardContent className="p-6">
-                  <Button className="w-full" variant="default">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-xl mb-1">{city.city_name}</h3>
+                      <p className="text-sm text-muted-foreground">{city.country}</p>
+                    </div>
+                    <MapPin className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {city.upcoming_events} eventos próximos
+                    </Badge>
+                  </div>
+                  {city.next_event_name && (
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-xs text-muted-foreground mb-1">Próximo evento:</p>
+                      <p className="text-sm font-medium line-clamp-1">{city.next_event_name}</p>
+                      {city.next_event_date && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(city.next_event_date).toLocaleDateString('es-ES', { 
+                            day: 'numeric', 
+                            month: 'short'
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="p-6 pt-0">
+                  <Button className="w-full">
                     Ver Eventos
                   </Button>
-                </CardContent>
+                </CardFooter>
               </Card>
             ))}
           </div>
-        </div>
+        )}
       </main>
 
       <Footer />
