@@ -12,7 +12,7 @@ export const useFavorites = () => {
   const [favorites, setFavorites] = useState<FavoriteEvent[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("festistay_favorites");
+    const stored = localStorage.getItem("feelomove_favorites");
     if (stored) {
       setFavorites(JSON.parse(stored));
     }
@@ -21,13 +21,13 @@ export const useFavorites = () => {
   const addFavorite = (event: FavoriteEvent) => {
     const newFavorites = [...favorites, event];
     setFavorites(newFavorites);
-    localStorage.setItem("festistay_favorites", JSON.stringify(newFavorites));
+    localStorage.setItem("feelomove_favorites", JSON.stringify(newFavorites));
   };
 
   const removeFavorite = (eventId: string) => {
     const newFavorites = favorites.filter(f => f.event_id !== eventId);
     setFavorites(newFavorites);
-    localStorage.setItem("festistay_favorites", JSON.stringify(newFavorites));
+    localStorage.setItem("feelomove_favorites", JSON.stringify(newFavorites));
   };
 
   const isFavorite = (eventId: string) => {

@@ -21,7 +21,7 @@ const Navbar = () => {
           <NavLink to="/" className="flex items-center gap-2 text-xl font-bold">
             <Music className="h-6 w-6 text-primary" />
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              FestiStay
+              Feelomove
             </span>
           </NavLink>
 

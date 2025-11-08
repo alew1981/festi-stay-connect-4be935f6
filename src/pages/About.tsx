@@ -14,7 +14,7 @@ const About = () => {
           {/* Hero Section */}
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-              Sobre FestiStay
+              Sobre Feelomove
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Conectamos la pasión por la música con experiencias de alojamiento inolvidables
@@ -26,7 +26,7 @@ const About = () => {
             <div className="bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5 rounded-2xl p-8 md:p-12">
               <h2 className="text-3xl font-bold mb-6">Nuestra Misión</h2>
               <p className="text-lg text-foreground/80 leading-relaxed mb-4">
-                En FestiStay, creemos que cada experiencia musical merece el alojamiento perfecto. 
+                En Feelomove, creemos que cada experiencia musical merece el alojamiento perfecto. 
                 Somos una plataforma que simplifica la búsqueda de eventos musicales y la reserva de 
                 hoteles cercanos, todo en un solo lugar.
               </p>

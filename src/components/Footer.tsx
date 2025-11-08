@@ -11,7 +11,7 @@ const Footer = () => {
             <div className="flex items-center gap-2 text-xl font-bold">
               <Music className="h-6 w-6 text-primary" />
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                FestiStay
+                Feelomove
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -87,7 +87,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 FestiStay. Todos los derechos reservados.</p>
+          <p>&copy; 2024 Feelomove. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
