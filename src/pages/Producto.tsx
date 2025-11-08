@@ -1,48 +1,47 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Ticket, Hotel, ExternalLink, ShoppingCart, ArrowUpDown, Star } from "lucide-react";
+import { Calendar, MapPin, Ticket, Hotel, ExternalLink, ShoppingCart, Star, Heart } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useFavorites } from "@/hooks/useFavorites";
 import electronicImg from "@/assets/festival-electronic.jpg";
 
-// Mock data para hoteles - en producción vendría de la API
-const mockHotels = [
-  { id: 1, name: "Hotel Barceló Raval", distance: 1.5, stars: 4, pricePerNight: 120, image: electronicImg, partnerUrl: "https://booking.com", description: "Moderno hotel en el corazón del Raval con terraza panorámica y piscina en la azotea." },
-  { id: 2, name: "W Barcelona", distance: 2, stars: 5, pricePerNight: 250, image: electronicImg, partnerUrl: "https://booking.com", description: "Icónico hotel de lujo frente al mar con diseño vanguardista y servicios exclusivos." },
-  { id: 3, name: "Hotel Arts Barcelona", distance: 1.8, stars: 5, pricePerNight: 280, image: electronicImg, partnerUrl: "https://booking.com", description: "Elegante hotel de 5 estrellas con vistas al Mediterráneo y gastronomía de primer nivel." },
-  { id: 4, name: "NH Collection Barcelona", distance: 3, stars: 4, pricePerNight: 150, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel céntrico con habitaciones espaciosas y servicios de calidad para tu estancia." },
-  { id: 5, name: "Hotel Pullman Barcelona", distance: 2.5, stars: 4, pricePerNight: 140, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel contemporáneo cerca del puerto con spa, gimnasio y restaurante mediterráneo." },
-  { id: 6, name: "Melia Barcelona Sky", distance: 2.2, stars: 4, pricePerNight: 165, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel moderno con impresionantes vistas de la ciudad desde sus plantas superiores." },
-  { id: 7, name: "Grand Hotel Central", distance: 1.3, stars: 5, pricePerNight: 220, image: electronicImg, partnerUrl: "https://booking.com", description: "Boutique hotel de lujo en el Barrio Gótico con piscina infinity en la azotea." },
-  { id: 8, name: "Hotel Ohla Barcelona", distance: 1.6, stars: 5, pricePerNight: 240, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel boutique de diseño en Vía Laietana con gastronomía galardonada con estrella Michelin." },
-  { id: 9, name: "Room Mate Emma", distance: 2.8, stars: 3, pricePerNight: 95, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel boutique con diseño único y ubicación perfecta para explorar la ciudad." },
-  { id: 10, name: "Hotel Praktik Bakery", distance: 2.3, stars: 3, pricePerNight: 110, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel con concepto único que incluye panadería artesanal propia en el lobby." },
-  { id: 11, name: "Cotton House Hotel", distance: 1.9, stars: 5, pricePerNight: 290, image: electronicImg, partnerUrl: "https://booking.com", description: "Lujoso hotel en edificio histórico neoclásico con spa y restaurante de alta cocina." },
-  { id: 12, name: "Hotel 1898", distance: 1.7, stars: 4, pricePerNight: 175, image: electronicImg, partnerUrl: "https://booking.com", description: "Elegante hotel en La Rambla en edificio colonial con piscina en azotea." },
-  { id: 13, name: "Almanac Barcelona", distance: 2.1, stars: 5, pricePerNight: 270, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel de lujo con rooftop bar, spa exclusivo y habitaciones con vistas espectaculares." },
-  { id: 14, name: "Hotel Casa Fuster", distance: 3.2, stars: 5, pricePerNight: 310, image: electronicImg, partnerUrl: "https://booking.com", description: "Hotel cinco estrellas Gran Lujo en edificio modernista con jazz bar y terraza." },
-  { id: 15, name: "Hotel El Palace", distance: 2.6, stars: 5, pricePerNight: 320, image: electronicImg, partnerUrl: "https://booking.com", description: "Histórico hotel de lujo con más de 100 años de elegancia y servicio excepcional." },
-  { id: 16, name: "Hotel Soho House", distance: 1.4, stars: 4, pricePerNight: 195, image: electronicImg, partnerUrl: "https://booking.com", description: "Exclusivo hotel club con diseño contemporáneo y ambiente cosmopolita único." },
-];
+interface CartTicket {
+  priceId: string;
+  name: string;
+  code: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
+interface CartHotel {
+  hotelId: string;
+  name: string;
+  pricePerNight: number;
+  nights: number;
+  image?: string;
+  bookingUrl?: string;
+}
 
 const Producto = () => {
   const { id } = useParams();
-  const [ticketAttendees, setTicketAttendees] = useState<{ [key: string]: number }>({});
-  const [selectedHotel, setSelectedHotel] = useState<number | null>(null);
-  const [hotelNights, setHotelNights] = useState(3);
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const [cartTickets, setCartTickets] = useState<CartTicket[]>([]);
+  const [cartHotel, setCartHotel] = useState<CartHotel | null>(null);
   const [sortBy, setSortBy] = useState("distance");
-  const [expandedHotels, setExpandedHotels] = useState<{ [key: number]: boolean }>({});
+  const [expandedHotels, setExpandedHotels] = useState<{ [key: string]: boolean }>({});
   const [filterStars, setFilterStars] = useState("all");
   const [filterPrice, setFilterPrice] = useState("all");
 
-  // Obtener detalles del evento usando el ID de la URL
+  // Obtener detalles del evento
   const { data: eventDetails, isLoading: isLoadingEvent } = useQuery({
     queryKey: ["event", id],
     queryFn: async () => {
@@ -72,58 +71,136 @@ const Producto = () => {
     },
   });
 
-  const festival = {
-    hotels: mockHotels,
+  // Obtener hoteles reales de Supabase
+  const { data: hotels, isLoading: isLoadingHotels } = useQuery({
+    queryKey: ["hotels", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("event_details_page_hotels_view")
+        .select("*")
+        .eq("event_id", id)
+        .order("hotel_rank", { ascending: true })
+        .limit(20);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Seleccionar por defecto 2 entradas del primer tipo disponible al cargar
+  useEffect(() => {
+    if (ticketPrices && ticketPrices.length > 0 && cartTickets.length === 0) {
+      const firstAvailableTicket = ticketPrices.find(t => t.availability !== 'none');
+      if (firstAvailableTicket) {
+        setCartTickets([{
+          priceId: firstAvailableTicket.id.toString(),
+          name: firstAvailableTicket.price_type_name,
+          code: firstAvailableTicket.price_type_code,
+          price: Number(firstAvailableTicket.total_price),
+          quantity: 2,
+          image: eventDetails?.image_standard_url || electronicImg,
+        }]);
+      }
+    }
+  }, [ticketPrices, cartTickets.length, eventDetails]);
+
+  const updateTicketInCart = (priceId: string, quantity: number) => {
+    if (quantity <= 0) {
+      setCartTickets(prev => prev.filter(t => t.priceId !== priceId));
+      return;
+    }
+
+    const ticket = ticketPrices?.find(t => t.id.toString() === priceId);
+    if (!ticket) return;
+
+    setCartTickets(prev => {
+      const existing = prev.find(t => t.priceId === priceId);
+      if (existing) {
+        return prev.map(t => t.priceId === priceId ? { ...t, quantity } : t);
+      } else {
+        return [...prev, {
+          priceId,
+          name: ticket.price_type_name,
+          code: ticket.price_type_code,
+          price: Number(ticket.total_price),
+          quantity,
+          image: eventDetails?.image_standard_url || electronicImg,
+        }];
+      }
+    });
   };
-  
+
+  const addHotelToCart = (hotel: any) => {
+    setCartHotel({
+      hotelId: hotel.hotel_id,
+      name: hotel.hotel_name,
+      pricePerNight: Number(hotel.price || hotel.suggested_selling_price || 0),
+      nights: 1,
+      image: hotel.thumbnail || hotel.main_photo,
+      bookingUrl: `https://www.booking.com/hotel/${hotel.hotel_id}.html`,
+    });
+  };
+
+  const updateHotelNights = (nights: number) => {
+    if (cartHotel) {
+      setCartHotel({ ...cartHotel, nights: Math.max(1, nights) });
+    }
+  };
+
   const getTotalAttendees = () => {
-    return Object.values(ticketAttendees).reduce((sum, count) => sum + count, 0);
+    return cartTickets.reduce((sum, t) => sum + t.quantity, 0);
   };
 
   const getTicketsTotal = () => {
-    if (!ticketPrices) return 0;
-    return Object.entries(ticketAttendees).reduce((total, [priceId, count]) => {
-      const ticket = ticketPrices.find(t => t.id.toString() === priceId);
-      return total + (ticket?.total_price || 0) * count;
-    }, 0);
+    return cartTickets.reduce((sum, t) => sum + (t.price * t.quantity), 0);
   };
 
-  const hotelPrice = selectedHotel ? (festival.hotels.find(h => h.id === selectedHotel)?.pricePerNight || 0) * hotelNights : 0;
-  const totalPackage = getTicketsTotal() + hotelPrice;
+  const hotelTotal = cartHotel ? cartHotel.pricePerNight * cartHotel.nights : 0;
+  const totalPackage = getTicketsTotal() + hotelTotal;
   const totalAttendees = getTotalAttendees();
   const totalPerPerson = totalAttendees > 0 ? totalPackage / totalAttendees : 0;
 
-  const updateTicketAttendees = (priceId: string, count: number) => {
-    setTicketAttendees(prev => ({
-      ...prev,
-      [priceId]: Math.max(0, count)
-    }));
-  };
-
-  const filteredHotels = mockHotels
+  const filteredHotels = (hotels || [])
     .filter(hotel => filterStars === "all" || hotel.stars === Number(filterStars))
     .filter(hotel => {
       if (filterPrice === "all") return true;
-      if (filterPrice === "budget") return hotel.pricePerNight < 150;
-      if (filterPrice === "mid") return hotel.pricePerNight >= 150 && hotel.pricePerNight < 250;
-      if (filterPrice === "luxury") return hotel.pricePerNight >= 250;
+      const price = Number(hotel.price || hotel.suggested_selling_price || 0);
+      if (filterPrice === "budget") return price < 150;
+      if (filterPrice === "mid") return price >= 150 && price < 250;
+      if (filterPrice === "luxury") return price >= 250;
       return true;
     });
 
   const sortedHotels = [...filteredHotels].sort((a, b) => {
-    if (sortBy === "price-asc") return a.pricePerNight - b.pricePerNight;
-    if (sortBy === "price-desc") return b.pricePerNight - a.pricePerNight;
-    if (sortBy === "distance") return a.distance - b.distance;
-    if (sortBy === "stars") return b.stars - a.stars;
+    const priceA = Number(a.price || a.suggested_selling_price || 0);
+    const priceB = Number(b.price || b.suggested_selling_price || 0);
+    
+    if (sortBy === "price-asc") return priceA - priceB;
+    if (sortBy === "price-desc") return priceB - priceA;
+    if (sortBy === "distance") return (a.distance_to_venue || 999) - (b.distance_to_venue || 999);
+    if (sortBy === "stars") return (b.stars || 0) - (a.stars || 0);
     return 0;
   });
 
-  const toggleDescription = (hotelId: number) => {
+  const toggleDescription = (hotelId: string) => {
     setExpandedHotels(prev => ({ ...prev, [hotelId]: !prev[hotelId] }));
   };
 
   const truncateText = (text: string, limit: number) => {
+    if (!text) return "";
     return text.length > limit ? text.substring(0, limit) + "..." : text;
+  };
+
+  const handleToggleFavorite = () => {
+    if (eventDetails) {
+      toggleFavorite({
+        event_id: eventDetails.event_id,
+        event_name: eventDetails.event_name,
+        event_date: eventDetails.event_date,
+        venue_city: eventDetails.venue_city,
+        image_url: eventDetails.image_standard_url,
+      });
+    }
   };
 
   if (isLoadingEvent || isLoadingTickets) {
@@ -178,16 +255,28 @@ const Producto = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
                 <div className="p-8 w-full">
-                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{eventDetails.event_name}</h1>
-                  <div className="flex flex-wrap gap-4 text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-primary" />
-                      <span>{eventDetails.venue_name}, {eventDetails.venue_city}</span>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h1 className="text-4xl md:text-5xl font-bold mb-4">{eventDetails.event_name}</h1>
+                      <div className="flex flex-wrap gap-4 text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-5 w-5 text-primary" />
+                          <span>{eventDetails.venue_name}, {eventDetails.venue_city}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5 text-secondary" />
+                          <span>{formattedDate}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-secondary" />
-                      <span>{formattedDate}</span>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-background/80 backdrop-blur-sm"
+                      onClick={handleToggleFavorite}
+                    >
+                      <Heart className={`h-5 w-5 ${isFavorite(eventDetails.event_id) ? 'fill-primary text-primary' : ''}`} />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -218,57 +307,45 @@ const Producto = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {ticketPrices.map((ticket) => (
-                    <div
-                      key={ticket.id}
-                      className="p-3 rounded-lg border-2 border-border hover:border-primary/50 transition-all"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-baseline gap-2 mb-1">
-                            <h3 className="font-semibold text-base">{ticket.price_type_name}</h3>
-                            <span className="text-xs text-muted-foreground">{ticket.price_type_code}</span>
-                          </div>
-                          {ticket.price_type_description && (
-                            <p className="text-xs text-muted-foreground mb-2">{ticket.price_type_description}</p>
-                          )}
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="text-xs text-muted-foreground">Asistentes:</span>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => updateTicketAttendees(ticket.id.toString(), (ticketAttendees[ticket.id.toString()] || 0) - 1)}
-                                disabled={ticket.availability === 'none'}
-                              >
-                                -
-                              </Button>
-                              <span className="text-sm font-semibold w-8 text-center">
-                                {ticketAttendees[ticket.id.toString()] || 0}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => updateTicketAttendees(ticket.id.toString(), (ticketAttendees[ticket.id.toString()] || 0) + 1)}
-                                disabled={ticket.availability === 'none'}
-                              >
-                                +
-                              </Button>
+                  {ticketPrices.map((ticket) => {
+                    const cartTicket = cartTickets.find(t => t.priceId === ticket.id.toString());
+                    const currentQuantity = cartTicket?.quantity || 0;
+
+                    return (
+                      <div
+                        key={ticket.id}
+                        className="p-3 rounded-lg border-2 border-border hover:border-primary/50 transition-all"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <h3 className="font-semibold text-base">{ticket.price_type_name}</h3>
+                              <span className="text-xs text-muted-foreground">{ticket.price_type_code}</span>
                             </div>
+                            {ticket.price_type_description && (
+                              <p className="text-xs text-muted-foreground mb-2">{ticket.price_type_description}</p>
+                            )}
                             {ticket.availability === 'none' && (
                               <Badge variant="destructive" className="text-xs">Agotado</Badge>
                             )}
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-primary">€{Number(ticket.total_price).toFixed(2)}</p>
-                          <p className="text-xs text-muted-foreground">por persona</p>
+                          <div className="text-right">
+                            <p className="text-xl font-bold text-primary">€{Number(ticket.total_price).toFixed(2)}</p>
+                            <p className="text-xs text-muted-foreground">por persona</p>
+                            <Button
+                              variant={currentQuantity > 0 ? "default" : "outline"}
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => updateTicketInCart(ticket.id.toString(), currentQuantity > 0 ? 0 : 1)}
+                              disabled={ticket.availability === 'none'}
+                            >
+                              {currentQuantity > 0 ? `En cesta (${currentQuantity})` : 'Añadir'}
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -276,7 +353,7 @@ const Producto = () => {
             {/* Hoteles */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4">
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <Hotel className="h-6 w-6" />
                     Hoteles Recomendados
@@ -321,81 +398,80 @@ const Producto = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sortedHotels.map((hotel) => (
-                    <div
-                      key={hotel.id}
-                      className={`rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${
-                        selectedHotel === hotel.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => setSelectedHotel(hotel.id)}
-                    >
-                      <div className="h-32 overflow-hidden">
-                        <img
-                          src={hotel.image}
-                          alt={hotel.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-sm">{hotel.name}</h4>
-                          {selectedHotel === hotel.id && (
-                            <Badge variant="default" className="text-xs">✓</Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {"⭐".repeat(hotel.stars)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mb-2">{hotel.distance} km del festival</p>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          {expandedHotels[hotel.id] 
-                            ? hotel.description 
-                            : truncateText(hotel.description, 50)}
-                          {hotel.description.length > 50 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDescription(hotel.id);
-                              }}
-                              className="text-primary hover:underline ml-1"
-                            >
-                              {expandedHotels[hotel.id] ? "ver menos" : "ver más"}
-                            </button>
-                          )}
-                        </p>
-                        <p className="text-lg font-bold text-primary">
-                          €{hotel.pricePerNight}/noche
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {isLoadingHotels ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Cargando hoteles...
+                  </div>
+                ) : sortedHotels.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No se encontraron hoteles disponibles
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {sortedHotels.map((hotel) => {
+                      const price = Number(hotel.price || hotel.suggested_selling_price || 0);
+                      const isSelected = cartHotel?.hotelId === hotel.hotel_id;
 
-                {selectedHotel && (
-                  <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                    <label className="text-sm font-medium mb-2 block">
-                      Número de noches
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setHotelNights(Math.max(1, hotelNights - 1))}
-                      >
-                        -
-                      </Button>
-                      <span className="text-lg font-semibold w-12 text-center">{hotelNights}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setHotelNights(hotelNights + 1)}
-                      >
-                        +
-                      </Button>
-                    </div>
+                      return (
+                        <div
+                          key={hotel.hotel_id}
+                          className={`rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => addHotelToCart(hotel)}
+                        >
+                          {(hotel.thumbnail || hotel.main_photo) && (
+                            <div className="h-32 overflow-hidden">
+                              <img
+                                src={hotel.thumbnail || hotel.main_photo}
+                                alt={hotel.hotel_name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold text-sm">{hotel.hotel_name}</h4>
+                              {isSelected && (
+                                <Badge variant="default" className="text-xs">✓</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {"⭐".repeat(hotel.stars || 0)}
+                              {hotel.rating && ` ${hotel.rating}/10`}
+                            </p>
+                            {hotel.distance_to_venue && (
+                              <p className="text-xs text-muted-foreground mb-2">
+                                {hotel.distance_to_venue.toFixed(1)} km del evento
+                              </p>
+                            )}
+                            {hotel.hotel_description && (
+                              <p className="text-xs text-muted-foreground mb-2">
+                                {expandedHotels[hotel.hotel_id] 
+                                  ? hotel.hotel_description 
+                                  : truncateText(hotel.hotel_description, 50)}
+                                {hotel.hotel_description.length > 50 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleDescription(hotel.hotel_id);
+                                    }}
+                                    className="text-primary hover:underline ml-1"
+                                  >
+                                    {expandedHotels[hotel.hotel_id] ? "ver menos" : "ver más"}
+                                  </button>
+                                )}
+                              </p>
+                            )}
+                            <p className="text-lg font-bold text-primary">
+                              €{price.toFixed(2)}/noche
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -413,33 +489,65 @@ const Producto = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {getTotalAttendees() > 0 ? (
-                    <div className="space-y-2">
-                      {Object.entries(ticketAttendees).map(([priceId, count]) => {
-                        if (count === 0) return null;
-                        const ticket = ticketPrices?.find(t => t.id.toString() === priceId);
-                        if (!ticket) return null;
-                        return (
-                          <div key={priceId} className="p-3 bg-muted/30 rounded-lg">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <p className="font-medium text-sm">{ticket.price_type_name}</p>
-                                <p className="text-xs text-muted-foreground">{ticket.price_type_code}</p>
+                  {/* Tickets en la cesta */}
+                  {cartTickets.length > 0 ? (
+                    <div className="space-y-3">
+                      {cartTickets.map((ticket) => (
+                        <div key={ticket.priceId} className="p-3 bg-muted/30 rounded-lg">
+                          <div className="flex gap-3">
+                            {ticket.image && (
+                              <img 
+                                src={ticket.image} 
+                                alt={ticket.name}
+                                className="w-12 h-12 object-cover rounded"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <p className="font-medium text-sm">{ticket.name}</p>
+                                  <p className="text-xs text-muted-foreground">{ticket.code}</p>
+                                </div>
                               </div>
-                              <Badge variant="secondary">{count}x</Badge>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => updateTicketInCart(ticket.priceId, ticket.quantity - 1)}
+                                  >
+                                    -
+                                  </Button>
+                                  <span className="text-sm font-semibold w-6 text-center">
+                                    {ticket.quantity}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => updateTicketInCart(ticket.priceId, ticket.quantity + 1)}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                                <p className="font-bold text-sm">€{(ticket.price * ticket.quantity).toFixed(2)}</p>
+                              </div>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="w-full mt-2"
+                                asChild
+                              >
+                                <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  Reservar en Ticketmaster
+                                </a>
+                              </Button>
                             </div>
-                            <p className="text-right font-bold">€{(Number(ticket.total_price) * count).toFixed(2)}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="w-full mt-2"
-                              onClick={() => updateTicketAttendees(priceId, 0)}
-                            >
-                              Eliminar
-                            </Button>
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
@@ -447,58 +555,87 @@ const Producto = () => {
                     </p>
                   )}
 
-                  {selectedHotel && (
+                  {/* Hotel en la cesta */}
+                  {cartHotel && (
                     <div className="pt-4 border-t">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-sm">
-                            {festival.hotels.find(h => h.id === selectedHotel)?.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{hotelNights} noches</p>
+                      <div className="p-3 bg-muted/30 rounded-lg">
+                        <div className="flex gap-3">
+                          {cartHotel.image && (
+                            <img 
+                              src={cartHotel.image} 
+                              alt={cartHotel.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <p className="font-medium text-sm mb-2">{cartHotel.name}</p>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-muted-foreground">Noches:</span>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => updateHotelNights(cartHotel.nights - 1)}
+                                >
+                                  -
+                                </Button>
+                                <span className="text-sm font-semibold w-6 text-center">
+                                  {cartHotel.nights}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => updateHotelNights(cartHotel.nights + 1)}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+                            <p className="font-bold text-sm text-right mb-2">
+                              €{(cartHotel.pricePerNight * cartHotel.nights).toFixed(2)}
+                            </p>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="w-full"
+                              asChild
+                            >
+                              <a href={cartHotel.bookingUrl} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Reservar Hotel
+                              </a>
+                            </Button>
+                          </div>
                         </div>
-                        <p className="font-bold">€{hotelPrice.toFixed(2)}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="w-full mt-2"
-                        onClick={() => setSelectedHotel(null)}
-                      >
-                        Eliminar
-                      </Button>
                     </div>
                   )}
 
-                  {(getTotalAttendees() > 0 || selectedHotel) && (
-                    <div className="pt-4 space-y-2 border-t">
+                  {/* Totales */}
+                  {(cartTickets.length > 0 || cartHotel) && (
+                    <div className="pt-4 space-y-3 border-t">
+                      {totalAttendees > 0 && (
+                        <div className="p-4 bg-primary/10 rounded-lg">
+                          <div className="text-center">
+                            <p className="text-xs text-muted-foreground mb-1">Total por persona</p>
+                            <p className="text-3xl font-bold text-primary">
+                              €{totalPerPerson.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {totalAttendees} {totalAttendees === 1 ? 'asistente' : 'asistentes'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex justify-between font-bold text-lg">
                         <span>Total</span>
-                        <span className="text-primary">€{totalPackage.toFixed(2)}</span>
+                        <span>€{totalPackage.toFixed(2)}</span>
                       </div>
-                      {totalAttendees > 0 && (
-                        <p className="text-xs text-muted-foreground text-right">
-                          €{totalPerPerson.toFixed(2)} por persona ({totalAttendees} asistentes)
-                        </p>
-                      )}
                     </div>
                   )}
                 </CardContent>
-                <CardFooter>
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    disabled={getTotalAttendees() === 0}
-                    asChild={getTotalAttendees() > 0}
-                  >
-                    {getTotalAttendees() > 0 ? (
-                      <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
-                        Reservar en Ticketmaster
-                      </a>
-                    ) : (
-                      <span>Selecciona entradas</span>
-                    )}
-                  </Button>
-                </CardFooter>
               </Card>
             </div>
           </div>

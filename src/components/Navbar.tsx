@@ -1,10 +1,17 @@
 import { NavLink } from "./NavLink";
 import { Button } from "./ui/button";
-import { Music, Menu, X } from "lucide-react";
+import { Music, Menu, X, Search, Heart } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import SearchBar from "./SearchBar";
+import { useFavorites } from "@/hooks/useFavorites";
+import { Badge } from "./ui/badge";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { favorites } = useFavorites();
+  const navigate = useNavigate();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -19,7 +26,7 @@ const Navbar = () => {
           </NavLink>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
             <NavLink
               to="/"
               className="text-foreground/80 hover:text-foreground transition-colors"
@@ -55,6 +62,34 @@ const Navbar = () => {
             >
               Sobre Nosotros
             </NavLink>
+            
+            {/* Search and Favorites Icons */}
+            <div className="flex items-center gap-2 ml-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSearchOpen(true)}
+                className="relative"
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/favoritos")}
+                className="relative"
+              >
+                <Heart className="h-5 w-5" />
+                {favorites.length > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                  >
+                    {favorites.length}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -110,9 +145,45 @@ const Navbar = () => {
             >
               Sobre Nosotros
             </NavLink>
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsSearchOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="flex-1"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigate("/favoritos");
+                  setIsMenuOpen(false);
+                }}
+                className="flex-1 relative"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Favoritos
+                {favorites.length > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                  >
+                    {favorites.length}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </div>
+      
+      <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </nav>
   );
 };
