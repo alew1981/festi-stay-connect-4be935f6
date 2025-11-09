@@ -339,17 +339,45 @@ const Producto = () => {
                               <Badge variant="destructive" className="text-xs">Agotado</Badge>
                             )}
                           </div>
-                          <div className="text-right">
-                            <p className="text-xl font-bold text-primary">€{Number(ticket.total_price).toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground">por persona</p>
+                          <div className="text-right flex items-center gap-2">
+                            <div>
+                              <p className="text-xl font-bold text-primary">€{Number(ticket.total_price).toFixed(2)}</p>
+                              <p className="text-xs text-muted-foreground">por persona</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => updateTicketInCart(ticket.id.toString(), currentQuantity - 1)}
+                                disabled={currentQuantity <= 0}
+                              >
+                                -
+                              </Button>
+                              <span className="text-sm font-semibold w-8 text-center">
+                                {currentQuantity}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => updateTicketInCart(ticket.id.toString(), currentQuantity + 1)}
+                                disabled={ticket.availability === 'none'}
+                              >
+                                +
+                              </Button>
+                            </div>
                             <Button
                               variant={currentQuantity > 0 ? "default" : "outline"}
                               size="sm"
-                              className="mt-2"
-                              onClick={() => updateTicketInCart(ticket.id.toString(), currentQuantity > 0 ? 0 : 1)}
+                              onClick={() => {
+                                if (currentQuantity === 0) {
+                                  updateTicketInCart(ticket.id.toString(), 1);
+                                }
+                              }}
                               disabled={ticket.availability === 'none'}
                             >
-                              {currentQuantity > 0 ? `En cesta (${currentQuantity})` : 'Añadir'}
+                              Añadir
                             </Button>
                           </div>
                         </div>
@@ -474,18 +502,53 @@ const Producto = () => {
                                 )}
                               </p>
                             )}
-                            <div className="flex items-center justify-between">
+                             <div className="flex items-center justify-between">
                               <p className="text-lg font-bold text-primary">
-                                €{price.toFixed(2)}/noche
+                                €{Math.round(price)}/noche
                               </p>
-                              <Button
-                                size="sm"
-                                variant={isSelected ? "default" : "outline"}
-                                onClick={() => addHotelToCart(hotel)}
-                                disabled={isSelected}
-                              >
-                                {isSelected ? "Añadido" : "Añadir"}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (isSelected && cartHotel) {
+                                        updateHotelNights(cartHotel.nights - 1);
+                                      }
+                                    }}
+                                    disabled={!isSelected || (cartHotel?.nights || 1) <= 1}
+                                  >
+                                    -
+                                  </Button>
+                                  <span className="text-sm font-semibold w-8 text-center">
+                                    {isSelected ? cartHotel?.nights : 1}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (isSelected && cartHotel) {
+                                        updateHotelNights(cartHotel.nights + 1);
+                                      }
+                                    }}
+                                    disabled={!isSelected}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant={isSelected ? "default" : "outline"}
+                                  onClick={() => !isSelected && addHotelToCart(hotel)}
+                                  disabled={isSelected}
+                                >
+                                  {isSelected ? "✓" : "Añadir"}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -614,7 +677,7 @@ const Producto = () => {
                               </div>
                             </div>
                             <p className="font-bold text-sm text-right mb-2">
-                              €{(cartHotel.pricePerNight * cartHotel.nights).toFixed(2)}
+                              €{Math.round(cartHotel.pricePerNight * cartHotel.nights)}
                             </p>
                             <Button
                               variant="default"

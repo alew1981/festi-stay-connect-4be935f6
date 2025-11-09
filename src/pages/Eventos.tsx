@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import Map from "@/components/Map";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,25 +15,59 @@ import { supabase } from "@/integrations/supabase/client";
 const Eventos = () => {
   const [sortBy, setSortBy] = useState("date");
   const [filterCity, setFilterCity] = useState("all");
+  const [page, setPage] = useState(1);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
+  const observerTarget = useRef(null);
+  const EVENTS_PER_PAGE = 12;
 
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["events"],
+  const { data: events, isLoading, isFetching } = useQuery({
+    queryKey: ["events", page],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("event_list_page_view")
-        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price, venue_country, main_attraction_name")
+        .select("event_id, event_name, venue_city, venue_name, event_date, image_standard_url, min_price, venue_country, main_attraction_name, venue_latitude, venue_longitude")
         .gt("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
-        .limit(50);
+        .range((page - 1) * EVENTS_PER_PAGE, page * EVENTS_PER_PAGE - 1);
       
       if (error) throw error;
       return data;
     },
   });
 
-  const cities = [...new Set(events?.map(e => e.venue_city).filter(Boolean))];
+  useEffect(() => {
+    if (events) {
+      setAllEvents(prev => {
+        const newEvents = events.filter(e => !prev.some(p => p.event_id === e.event_id));
+        return [...prev, ...newEvents];
+      });
+    }
+  }, [events]);
 
-  const filteredEvents = events?.filter(event => 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !isFetching && events && events.length === EVENTS_PER_PAGE) {
+          setPage(prev => prev + 1);
+        }
+      },
+      { threshold: 1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [isFetching, events]);
+
+  const cities = [...new Set(allEvents?.map(e => e.venue_city).filter(Boolean))];
+
+  const filteredEvents = allEvents?.filter(event => 
     filterCity === "all" || event.venue_city === filterCity
   );
 
@@ -91,11 +126,16 @@ const Eventos = () => {
           </Select>
         </div>
 
-        {isLoading ? (
+        <div className="mb-8">
+          <Map events={filteredEvents?.filter(e => e.venue_latitude && e.venue_longitude) || []} />
+        </div>
+
+        {isLoading && page === 1 ? (
           <div className="text-center py-12">Cargando eventos...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedEvents?.map((event) => {
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sortedEvents?.map((event) => {
               const eventDate = new Date(event.event_date);
               const formattedDate = eventDate.toLocaleDateString('es-ES', { 
                 day: 'numeric', 
@@ -103,17 +143,19 @@ const Eventos = () => {
                 year: 'numeric'
               });
 
-              return (
-                <Card key={event.event_id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="h-48 overflow-hidden">
-                    <img
-                      src={event.image_standard_url || "/placeholder.svg"}
-                      alt={event.event_name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-bold text-lg mb-2 line-clamp-2">{event.event_name}</h3>
+                return (
+                  <Card key={event.event_id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="h-48 overflow-hidden relative">
+                      <img
+                        src={event.image_standard_url || "/placeholder.svg"}
+                        alt={event.event_name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent flex items-end">
+                        <h3 className="font-bold text-lg p-4 line-clamp-2 text-foreground">{event.event_name}</h3>
+                      </div>
+                    </div>
+                    <CardContent className="p-4">
                     {event.main_attraction_name && (
                       <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
                     )}
@@ -142,6 +184,10 @@ const Eventos = () => {
               );
             })}
           </div>
+          <div ref={observerTarget} className="h-10 flex items-center justify-center">
+            {isFetching && <span className="text-muted-foreground">Cargando más eventos...</span>}
+          </div>
+        </>
         )}
       </main>
 

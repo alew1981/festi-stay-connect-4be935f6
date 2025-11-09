@@ -20,18 +20,30 @@ const Generos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("event_list_page_view")
-        .select("main_attraction_id, main_attraction_name, attraction_image_standard_url")
+        .select("main_attraction_id, main_attraction_name, attraction_image_standard_url, event_date")
         .not("main_attraction_id", "is", null)
-        .not("main_attraction_name", "is", null);
+        .not("main_attraction_name", "is", null)
+        .gt("event_date", new Date().toISOString());
       
       if (error) throw error;
       
-      const uniqueArtists = Array.from(
-        new Map(data.map(item => [item.main_attraction_id, item])).values()
-      );
+      // Count events per artist
+      const artistEventCounts = data.reduce((acc: any, item) => {
+        const id = item.main_attraction_id;
+        if (!acc[id]) {
+          acc[id] = {
+            ...item,
+            event_count: 0
+          };
+        }
+        acc[id].event_count++;
+        return acc;
+      }, {});
       
-      return uniqueArtists.sort((a, b) => 
-        a.main_attraction_name.localeCompare(b.main_attraction_name)
+      const uniqueArtists = Object.values(artistEventCounts);
+      
+      return uniqueArtists.sort((a: any, b: any) => 
+        b.event_count - a.event_count
       );
     },
   });
@@ -54,11 +66,11 @@ const Generos = () => {
     enabled: !!selectedArtist,
   });
 
-  const filteredArtists = artists?.filter(artist =>
+  const filteredArtists = artists?.filter((artist: any) =>
     artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedArtistData = artists?.find(a => a.main_attraction_id === selectedArtist);
+  const selectedArtistData = artists?.find((a: any) => a.main_attraction_id === selectedArtist);
 
   if (selectedArtist && selectedArtistData) {
     return (
@@ -78,15 +90,15 @@ const Generos = () => {
 
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4">
-              {selectedArtistData.attraction_image_standard_url && (
+              {(selectedArtistData as any).attraction_image_standard_url && (
                 <img
-                  src={selectedArtistData.attraction_image_standard_url}
-                  alt={selectedArtistData.main_attraction_name}
+                  src={(selectedArtistData as any).attraction_image_standard_url}
+                  alt={(selectedArtistData as any).main_attraction_name}
                   className="w-24 h-24 rounded-lg object-cover"
                 />
               )}
               <div>
-                <h1 className="text-4xl md:text-5xl font-bold">{selectedArtistData.main_attraction_name}</h1>
+                <h1 className="text-4xl md:text-5xl font-bold">{(selectedArtistData as any).main_attraction_name}</h1>
                 <p className="text-muted-foreground text-lg mt-2">
                   {artistEvents?.length || 0} eventos próximos
                 </p>
@@ -180,23 +192,37 @@ const Generos = () => {
         {isLoadingArtists ? (
           <div className="text-center py-12">Cargando artistas...</div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredArtists?.map((artist) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredArtists?.map((artist: any) => (
               <Card
                 key={artist.main_attraction_id}
                 className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => setSelectedArtist(artist.main_attraction_id)}
               >
-                <div className="h-48 overflow-hidden">
-                  <img
-                    src={artist.attraction_image_standard_url || "/placeholder.svg"}
-                    alt={artist.main_attraction_name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-center line-clamp-2">{artist.main_attraction_name}</h3>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-xl mb-1 line-clamp-2">{artist.main_attraction_name}</h3>
+                    </div>
+                    {artist.attraction_image_standard_url && (
+                      <img
+                        src={artist.attraction_image_standard_url}
+                        alt={artist.main_attraction_name}
+                        className="w-16 h-16 rounded-lg object-cover ml-4"
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {artist.event_count} eventos próximos
+                    </Badge>
+                  </div>
                 </CardContent>
+                <CardFooter className="p-6 pt-0">
+                  <Button className="w-full">
+                    Ver Eventos
+                  </Button>
+                </CardFooter>
               </Card>
             ))}
           </div>
