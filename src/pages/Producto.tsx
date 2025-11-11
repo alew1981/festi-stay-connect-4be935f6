@@ -263,68 +263,60 @@ const Producto = () => {
                 alt={eventDetails.event_name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent flex items-end">
-                <div className="p-8 w-full space-y-4">
-                  <h1 className="text-4xl md:text-5xl font-bold">{eventDetails.event_name}</h1>
-                  {eventDetails.main_attraction_name && (
-                    <p className="text-xl text-muted-foreground">{eventDetails.main_attraction_name}</p>
-                  )}
-                  
-                  {/* Event details in structured grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                    <div className="flex items-start gap-3 p-3 bg-background/60 backdrop-blur-md rounded-lg border border-border/50">
-                      <Calendar className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fecha</p>
-                        <p className="text-sm font-semibold">
-                          {eventDate.toLocaleDateString('es-ES', { 
-                            day: 'numeric', 
-                            month: 'long', 
-                            year: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3 p-3 bg-background/60 backdrop-blur-md rounded-lg border border-border/50">
-                      <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Hora</p>
-                        <p className="text-sm font-semibold">
-                          {eventDate.toLocaleTimeString('es-ES', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: false
-                          })} h
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3 p-3 bg-background/60 backdrop-blur-md rounded-lg border border-border/50 md:col-span-2">
-                      <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ubicación</p>
-                        <p className="text-sm font-semibold">{eventDetails.venue_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {eventDetails.venue_city}, {eventDetails.venue_country}
-                        </p>
-                        {eventDetails.venue_address && (
-                          <p className="text-xs text-muted-foreground mt-1">{eventDetails.venue_address}</p>
-                        )}
-                      </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
+              
+              {/* Event info - bottom left */}
+              <div className="absolute bottom-0 left-0 p-6 text-white space-y-3">
+                <h1 className="text-3xl md:text-4xl font-bold drop-shadow-lg">{eventDetails.event_name}</h1>
+                {eventDetails.main_attraction_name && (
+                  <p className="text-lg drop-shadow-md opacity-90">{eventDetails.main_attraction_name}</p>
+                )}
+                
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="drop-shadow-md">
+                      {eventDate.toLocaleDateString('es-ES', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric'
+                      })}
+                    </span>
+                    <Clock className="h-4 w-4 ml-2" />
+                    <span className="drop-shadow-md">
+                      {eventDate.toLocaleTimeString('es-ES', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: false
+                      })} h
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div className="drop-shadow-md">
+                      <span className="font-medium">{eventDetails.venue_name}</span>
+                      <span className="opacity-90"> · {eventDetails.venue_city}, {eventDetails.venue_country}</span>
+                      {eventDetails.venue_address && (
+                        <div className="text-xs opacity-80 mt-0.5">{eventDetails.venue_address}</div>
+                      )}
                     </div>
                   </div>
-                  
-                  {eventDetails.seats_available && (
-                    <Badge className="bg-green-500 text-white">
-                      Entradas Disponibles
-                    </Badge>
-                  )}
                 </div>
               </div>
+
+              {/* Tickets available badge - top right */}
+              {eventDetails.seats_available && (
+                <div className="absolute top-4 right-4">
+                  <Badge className="bg-green-500 text-white text-sm py-1 px-3">
+                    Entradas Disponibles
+                  </Badge>
+                </div>
+              )}
+
+              {/* Favorite button - top right, below tickets badge */}
               <button
                 onClick={handleToggleFavorite}
-                className="absolute top-4 right-4 p-3 rounded-full bg-background/80 hover:bg-background transition-colors"
+                className="absolute top-16 right-4 p-3 rounded-full bg-background/80 hover:bg-background transition-colors"
                 aria-label={isFavorite(eventDetails.event_id) ? "Quitar de favoritos" : "Añadir a favoritos"}
               >
                 <Heart 
