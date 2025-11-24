@@ -222,18 +222,25 @@ const Generos = () => {
                   ) : (
                     <div className="w-full h-full bg-muted" />
                   )}
+                  <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                    {artist.subcategory_name && (
+                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-medium">
+                        {artist.subcategory_name}
+                      </Badge>
+                    )}
+                    {artist.event_count > 0 && (
+                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-medium">
+                        Entradas disponibles
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <CardContent className="p-6">
                   <h3 className="font-bold text-xl mb-3">{artist.main_attraction_name}</h3>
                   <div className="space-y-2">
-                    <Badge variant="secondary" className="bg-accent/10 text-foreground border-accent/20">
+                    <Badge variant="secondary" className="bg-accent/10 text-[#121212] border-accent/20">
                       {artist.event_count} eventos próximos
                     </Badge>
-                    {artist.subcategory_name && (
-                      <p className="text-sm text-muted-foreground">
-                        {artist.subcategory_name}
-                      </p>
-                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="p-6 pt-0">
