@@ -25,6 +25,38 @@ const Generos = () => {
     }
   }, [artistFromUrl]);
 
+  const { data: musicGenres, isLoading: isLoadingGenres } = useQuery({
+    queryKey: ["musicGenres"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tm_tbl_attractions")
+        .select("subcategory_name, event_count")
+        .gt("event_count", 0);
+      
+      if (error) throw error;
+      
+      // Group by subcategory and sum event counts
+      const genreMap = new Map();
+      data?.forEach(item => {
+        if (item.subcategory_name) {
+          const current = genreMap.get(item.subcategory_name) || { count: 0, artists: 0 };
+          genreMap.set(item.subcategory_name, {
+            count: current.count + (item.event_count || 0),
+            artists: current.artists + 1
+          });
+        }
+      });
+      
+      return Array.from(genreMap.entries())
+        .map(([name, stats]) => ({
+          name,
+          event_count: stats.count,
+          artist_count: stats.artists
+        }))
+        .sort((a, b) => b.event_count - a.event_count);
+    },
+  });
+
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
     queryKey: ["artists"],
     queryFn: async () => {
@@ -172,8 +204,57 @@ const Generos = () => {
         <Breadcrumbs />
         
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Artistas</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Géneros Musicales</h1>
           <p className="text-muted-foreground text-lg">
+            Explora por tipo de música y descubre tus artistas favoritos
+          </p>
+        </div>
+
+        {/* Music Genre Cards Section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">Tipos de Música</h2>
+          {isLoadingGenres ? (
+            <div className="text-center py-12">Cargando géneros...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {musicGenres?.map((genre: any) => (
+                <Card
+                  key={genre.name}
+                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                  onClick={() => setFilterGenre(genre.name)}
+                >
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+                    <div className="w-full h-full flex items-center justify-center">
+                      <h3 className="text-3xl font-bold text-foreground px-4 text-center">{genre.name}</h3>
+                    </div>
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                      <Badge className="bg-[#00FF8F] text-[#121212] hover:bg-[#00FF8F] border-0 font-medium">
+                        {genre.artist_count} artistas
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    <div className="space-y-2">
+                      <Badge variant="secondary" className="bg-accent/10 text-[#121212] border-accent/20">
+                        {genre.event_count} eventos próximos
+                      </Badge>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="p-6 pt-0">
+                    <Button variant="accent" className="w-full">
+                      Ver Artistas
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Artists Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Artistas</h2>
+          <p className="text-muted-foreground">
             Descubre tus artistas favoritos y sus próximos eventos
           </p>
         </div>
