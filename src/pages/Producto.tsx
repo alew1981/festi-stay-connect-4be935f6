@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -34,23 +34,29 @@ interface CartHotel {
 
 const Producto = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const domainId = searchParams.get('domain');
   const { toggleFavorite, isFavorite } = useFavorites();
   const [cartTickets, setCartTickets] = useState<CartTicket[]>([]);
   const [cartHotel, setCartHotel] = useState<CartHotel | null>(null);
-  const [sortBy, setSortBy] = useState("distance");
+  const [sortBy, setSortBy] = useState("rating");
   const [expandedHotels, setExpandedHotels] = useState<{ [key: string]: boolean }>({});
   const [filterStars, setFilterStars] = useState("all");
-  const [filterPrice, setFilterPrice] = useState("all");
 
   // Obtener detalles del evento
   const { data: eventDetails, isLoading: isLoadingEvent } = useQuery({
-    queryKey: ["event", id],
+    queryKey: ["event", id, domainId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("event_list_page_view")
+      let query = supabase
+        .from("tm_tbl_events")
         .select("*")
-        .eq("event_id", id)
-        .single();
+        .eq("event_id", id);
+      
+      if (domainId) {
+        query = query.eq("domain_id", domainId);
+      }
+      
+      const { data, error } = await query.maybeSingle();
       
       if (error) throw error;
       return data;
@@ -59,45 +65,72 @@ const Producto = () => {
 
   // Obtener precios de tickets
   const { data: ticketPrices, isLoading: isLoadingTickets } = useQuery({
-    queryKey: ["tickets", id],
+    queryKey: ["tickets", id, domainId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ticketmaster_event_prices")
+      let query = supabase
+        .from("tm_tbl_event_prices")
         .select("*")
-        .eq("event_id", id)
-        .order("display_order", { ascending: true });
+        .eq("event_id", id);
+      
+      if (domainId) {
+        query = query.eq("domain_id", domainId);
+      }
+      
+      const { data, error } = await query.order("total_price", { ascending: true });
       
       if (error) throw error;
       return data;
     },
   });
 
-  // Obtener hoteles reales de Supabase
-  const { data: hotels, isLoading: isLoadingHotels } = useQuery({
-    queryKey: ["hotels", id],
+  // Obtener hoteles desde la tabla de paquetes
+  const { data: packages, isLoading: isLoadingHotels } = useQuery({
+    queryKey: ["packages", id, domainId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("event_details_page_hotels_view")
-        .select("*")
-        .eq("event_id", id)
-        .order("hotel_rank", { ascending: true })
-        .limit(20);
+      let query = supabase
+        .from("lovable_tbl_packages")
+        .select(`
+          *,
+          lite_tbl_hotels (*)
+        `)
+        .eq("event_id", id);
+      
+      if (domainId) {
+        query = query.eq("domain_id", domainId);
+      }
+      
+      const { data, error } = await query.limit(20);
       
       if (error) throw error;
-      return data || [];
+      return data;
     },
   });
+
+  // Extraer hoteles únicos de los paquetes
+  const hotels = packages?.reduce((acc: any[], pkg: any) => {
+    if (pkg.lite_tbl_hotels && !acc.find(h => h.id === pkg.lite_tbl_hotels.id)) {
+      acc.push({
+        ...pkg.lite_tbl_hotels,
+        package_price: pkg.price,
+        suggested_selling_price: pkg.suggested_selling_price,
+        nights: pkg.nights,
+        checkin_date: pkg.checkin_date,
+        checkout_date: pkg.checkout_date
+      });
+    }
+    return acc;
+  }, []);
 
   // Seleccionar por defecto 2 entradas del primer tipo disponible al cargar
   useEffect(() => {
     if (ticketPrices && ticketPrices.length > 0 && cartTickets.length === 0) {
-      const firstAvailableTicket = ticketPrices.find(t => t.availability !== 'none');
+      const firstAvailableTicket = ticketPrices[0];
       if (firstAvailableTicket) {
         setCartTickets([{
           priceId: firstAvailableTicket.id.toString(),
-          name: firstAvailableTicket.price_type_name,
-          code: firstAvailableTicket.price_type_code,
-          description: firstAvailableTicket.price_type_description,
+          name: firstAvailableTicket.price_type_name || 'Entrada',
+          code: firstAvailableTicket.price_type_code || '',
+          description: firstAvailableTicket.price_type_description || '',
           price: Number(firstAvailableTicket.total_price),
           quantity: 2,
           image: eventDetails?.image_standard_url || electronicImg,
@@ -122,9 +155,9 @@ const Producto = () => {
       } else {
         return [...prev, {
           priceId,
-          name: ticket.price_type_name,
-          code: ticket.price_type_code,
-          description: ticket.price_type_description,
+          name: ticket.price_type_name || 'Entrada',
+          code: ticket.price_type_code || '',
+          description: ticket.price_type_description || '',
           price: Number(ticket.total_price),
           quantity,
           image: eventDetails?.image_standard_url || electronicImg,
@@ -135,12 +168,12 @@ const Producto = () => {
 
   const addHotelToCart = (hotel: any) => {
     setCartHotel({
-      hotelId: hotel.hotel_id,
-      name: hotel.hotel_name,
-      pricePerNight: Number(hotel.price || hotel.suggested_selling_price || 0),
-      nights: 1,
+      hotelId: hotel.id,
+      name: hotel.name,
+      pricePerNight: Number(hotel.package_price || hotel.suggested_selling_price || 0),
+      nights: hotel.nights || 1,
       image: hotel.thumbnail || hotel.main_photo,
-      bookingUrl: `https://www.booking.com/hotel/${hotel.hotel_id}.html`,
+      bookingUrl: `https://www.booking.com/hotel/${hotel.id}.html`,
     });
   };
 
@@ -148,6 +181,14 @@ const Producto = () => {
     if (cartHotel) {
       setCartHotel({ ...cartHotel, nights: Math.max(1, nights) });
     }
+  };
+
+  const removeTicketFromCart = (priceId: string) => {
+    setCartTickets(prev => prev.filter(t => t.priceId !== priceId));
+  };
+
+  const removeHotelFromCart = () => {
+    setCartHotel(null);
   };
 
   const getTotalAttendees = () => {
@@ -164,23 +205,15 @@ const Producto = () => {
   const totalPerPerson = totalAttendees > 0 ? totalPackage / totalAttendees : 0;
 
   const filteredHotels = (hotels || [])
-    .filter(hotel => filterStars === "all" || hotel.stars === Number(filterStars))
-    .filter(hotel => {
-      if (filterPrice === "all") return true;
-      const price = Number(hotel.price || hotel.suggested_selling_price || 0);
-      if (filterPrice === "budget") return price < 150;
-      if (filterPrice === "mid") return price >= 150 && price < 250;
-      if (filterPrice === "luxury") return price >= 250;
-      return true;
-    });
+    .filter((hotel: any) => filterStars === "all" || hotel.stars === Number(filterStars));
 
-  const sortedHotels = [...filteredHotels].sort((a, b) => {
-    const priceA = Number(a.price || a.suggested_selling_price || 0);
-    const priceB = Number(b.price || b.suggested_selling_price || 0);
+  const sortedHotels = [...filteredHotels].sort((a: any, b: any) => {
+    const priceA = Number(a.package_price || a.suggested_selling_price || 0);
+    const priceB = Number(b.package_price || b.suggested_selling_price || 0);
     
     if (sortBy === "price-asc") return priceA - priceB;
     if (sortBy === "price-desc") return priceB - priceA;
-    if (sortBy === "distance") return (a.distance_to_venue || 999) - (b.distance_to_venue || 999);
+    if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
     if (sortBy === "stars") return (b.stars || 0) - (a.stars || 0);
     return 0;
   });
@@ -201,47 +234,37 @@ const Producto = () => {
     return tmp.textContent || tmp.innerText || "";
   };
 
-  const handleToggleFavorite = () => {
-    if (eventDetails) {
-      toggleFavorite({
-        event_id: eventDetails.event_id,
-        event_name: eventDetails.event_name,
-        event_date: eventDetails.event_date,
-        venue_city: eventDetails.venue_city,
-        image_url: eventDetails.image_standard_url,
-      });
-    }
-  };
+  if (isLoadingEvent) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando evento...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (isLoadingEvent || isLoadingTickets) {
+  if (!eventDetails) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-8 mt-20">
-          <div className="text-center">Cargando...</div>
+          <p className="text-center text-muted-foreground">Evento no encontrado</p>
         </main>
         <Footer />
       </div>
     );
   }
 
-  if (!eventDetails || !ticketPrices) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8 mt-20">
-          <div className="text-center">No se encontró el evento</div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  const eventDate = new Date(eventDetails.event_date);
-  const formattedDate = eventDate.toLocaleDateString('es-ES', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric',
+  const eventDate = eventDetails.event_date ? new Date(eventDetails.event_date) : new Date();
+  const formattedDate = eventDate.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const formattedTime = eventDate.toLocaleTimeString('es-ES', {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -249,484 +272,417 @@ const Producto = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-8 mt-20">
         <Breadcrumbs />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Contenido principal */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Festival Info */}
-            <div className="relative h-96 rounded-lg overflow-hidden">
-              <img
-                src={eventDetails.image_standard_url || electronicImg}
-                alt={eventDetails.event_name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
-              
-              {/* Event info - bottom left */}
-              <div className="absolute bottom-0 left-0 p-6 text-white space-y-3">
-                <h1 className="text-3xl md:text-4xl font-bold drop-shadow-lg">{eventDetails.event_name}</h1>
-                {eventDetails.main_attraction_name && (
-                  <p className="text-lg drop-shadow-md opacity-90">{eventDetails.main_attraction_name}</p>
-                )}
-                
-                <div className="space-y-1 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span className="drop-shadow-md">
-                      {eventDate.toLocaleDateString('es-ES', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric'
-                      })}
-                    </span>
-                    <Clock className="h-4 w-4 ml-2" />
-                    <span className="drop-shadow-md">
-                      {eventDate.toLocaleTimeString('es-ES', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: false
-                      })} h
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <div className="drop-shadow-md">
-                      <span className="font-medium">{eventDetails.venue_name}</span>
-                      <span className="opacity-90"> · {eventDetails.venue_city}, {eventDetails.venue_country}</span>
-                      {eventDetails.venue_address && (
-                        <div className="text-xs opacity-80 mt-0.5">{eventDetails.venue_address}</div>
-                      )}
-                    </div>
-                  </div>
+
+        {/* Event Image and Details */}
+        <div className="relative rounded-xl overflow-hidden mb-8 h-[500px]">
+          <img
+            src={eventDetails.image_standard_url || electronicImg}
+            alt={eventDetails.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          
+          {/* Entradas Disponibles Badge */}
+          <div className="absolute top-6 right-6">
+            <Badge className="bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold">
+              Entradas Disponibles
+            </Badge>
+          </div>
+
+          {/* Favorite Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-20 right-6 bg-background/50 hover:bg-background/80"
+            onClick={() => toggleFavorite({
+              event_id: id!,
+              event_name: eventDetails.name,
+              event_date: eventDetails.event_date || '',
+              venue_city: eventDetails.venue_city || '',
+              image_url: eventDetails.image_standard_url || ''
+            })}
+          >
+            <Heart className={`h-5 w-5 ${isFavorite(id!) ? 'fill-primary text-primary' : ''}`} />
+          </Button>
+
+          {/* Event Info */}
+          <div className="absolute bottom-6 left-6 right-6 space-y-3">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground drop-shadow-lg">
+              {eventDetails.name}
+            </h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-foreground/90 font-medium">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                <div>
+                  <div className="text-sm capitalize">{formattedDate}</div>
+                  <div className="text-sm">{formattedTime}</div>
                 </div>
               </div>
-
-              {/* Tickets available badge - top right */}
-              {eventDetails.seats_available && (
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-green-500 text-white text-sm py-1 px-3">
-                    Entradas Disponibles
-                  </Badge>
+              
+              {eventDetails.venue_name && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  <div>
+                    <div className="text-sm">{eventDetails.venue_name}</div>
+                    {eventDetails.venue_address && (
+                      <div className="text-xs opacity-80">{eventDetails.venue_address}</div>
+                    )}
+                  </div>
                 </div>
               )}
-
-              {/* Favorite button - top right, below tickets badge */}
-              <button
-                onClick={handleToggleFavorite}
-                className="absolute top-16 right-4 p-3 rounded-full bg-background/80 hover:bg-background transition-colors"
-                aria-label={isFavorite(eventDetails.event_id) ? "Quitar de favoritos" : "Añadir a favoritos"}
-              >
-                <Heart 
-                  className={`h-6 w-6 ${isFavorite(eventDetails.event_id) ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
-                />
-              </button>
+              
+              {eventDetails.venue_city && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  <div>
+                    <div className="text-sm">{eventDetails.venue_city}</div>
+                    {eventDetails.venue_country && (
+                      <div className="text-xs opacity-80">{eventDetails.venue_country}</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* About Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl">Descripción</CardTitle>
+                <CardTitle>Descripción</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Sobre el evento</h3>
-                  <p className="text-muted-foreground">
-                    {eventDetails?.attraction_description || `Disfruta de ${eventDetails.event_name} en ${eventDetails.venue_name}. Una experiencia única que no te puedes perder.`}
-                  </p>
-                </div>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  {eventDetails.main_attraction_name && `Evento de ${eventDetails.main_attraction_name}. `}
+                  Disfruta de este increíble evento en {eventDetails.venue_city}.
+                </p>
               </CardContent>
             </Card>
 
-            {/* Tipos de Entradas */}
+            {/* Tickets Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <Ticket className="h-6 w-6" />
-                  Tipos de Entradas
+                <CardTitle className="flex items-center gap-2">
+                  <Ticket className="h-5 w-5" />
+                  Entradas
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {ticketPrices.map((ticket) => {
-                    const cartTicket = cartTickets.find(t => t.priceId === ticket.id.toString());
-                    const currentQuantity = cartTicket?.quantity || 0;
-
+              <CardContent className="space-y-4">
+                {isLoadingTickets ? (
+                  <div className="text-center py-8 text-muted-foreground">Cargando entradas...</div>
+                ) : ticketPrices && ticketPrices.length > 0 ? (
+                  ticketPrices.map((ticket) => {
+                    const currentTicket = cartTickets.find(t => t.priceId === ticket.id.toString());
+                    const quantity = currentTicket?.quantity || 0;
+                    
                     return (
-                      <div
-                        key={ticket.id}
-                        className="p-3 rounded-lg border-2 border-border hover:border-primary/50 transition-all"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-baseline gap-2 mb-1">
-                              <h3 className="font-semibold text-base">{ticket.price_type_name}</h3>
-                              <span className="text-xs text-muted-foreground">{ticket.price_type_code}</span>
-                            </div>
-                            {ticket.price_type_description && (
-                              <p className="text-xs text-muted-foreground mb-2">{ticket.price_type_description}</p>
-                            )}
-                            {ticket.availability === 'none' && (
-                              <Badge variant="destructive" className="text-xs">Agotado</Badge>
+                      <div key={ticket.id} className="flex items-center justify-between p-4 rounded-lg border">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold">{ticket.price_type_name || 'Entrada'}</h4>
+                            {ticket.price_type_code && (
+                              <Badge variant="outline" className="text-xs">
+                                {ticket.price_type_code}
+                              </Badge>
                             )}
                           </div>
-                          <div className="text-right flex items-center gap-2">
-                            <div>
-                              <p className="text-xl font-bold text-primary">€{Number(ticket.total_price).toFixed(2)}</p>
-                              <p className="text-xs text-muted-foreground">por persona</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updateTicketInCart(ticket.id.toString(), currentQuantity - 1)}
-                                disabled={currentQuantity <= 0}
-                              >
-                                -
-                              </Button>
-                              <span className="text-sm font-semibold w-8 text-center">
-                                {currentQuantity}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updateTicketInCart(ticket.id.toString(), currentQuantity + 1)}
-                                disabled={ticket.availability === 'none'}
-                              >
-                                +
-                              </Button>
-                            </div>
-                            <Button
-                              variant={currentQuantity > 0 ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => {
-                                if (currentQuantity === 0) {
-                                  updateTicketInCart(ticket.id.toString(), 1);
-                                }
-                              }}
-                              disabled={ticket.availability === 'none'}
-                            >
-                              Añadir
-                            </Button>
-                          </div>
+                          {ticket.price_type_description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {ticket.price_type_description}
+                            </p>
+                          )}
+                          <p className="text-lg font-bold mt-2">
+                            €{Number(ticket.total_price).toFixed(2)}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <Select
+                            value={quantity.toString()}
+                            onValueChange={(value) => updateTicketInCart(ticket.id.toString(), parseInt(value))}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     );
-                  })}
-                </div>
+                  })
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No hay entradas disponibles en este momento
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Hoteles */}
+            {/* Hotels Section */}
             <Card>
               <CardHeader>
-                <div className="flex flex-col gap-4">
-                  <CardTitle className="text-2xl flex items-center gap-2">
-                    <Hotel className="h-6 w-6" />
-                    Hoteles Recomendados
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Hotel className="h-5 w-5" />
+                    Hoteles Cercanos
                   </CardTitle>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex gap-2">
+                    <Select value={filterStars} onValueChange={setFilterStars}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Estrellas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="3">3 ⭐</SelectItem>
+                        <SelectItem value="4">4 ⭐</SelectItem>
+                        <SelectItem value="5">5 ⭐</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-40">
                         <SelectValue placeholder="Ordenar por" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="distance">Distancia</SelectItem>
+                        <SelectItem value="rating">Mejor valorados</SelectItem>
                         <SelectItem value="price-asc">Precio: Menor a Mayor</SelectItem>
                         <SelectItem value="price-desc">Precio: Mayor a Menor</SelectItem>
                         <SelectItem value="stars">Estrellas</SelectItem>
                       </SelectContent>
                     </Select>
-                    
-                    <Select value={filterStars} onValueChange={setFilterStars}>
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue placeholder="Estrellas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="3">3 <Star className="inline h-3 w-3" /></SelectItem>
-                        <SelectItem value="4">4 <Star className="inline h-3 w-3" /></SelectItem>
-                        <SelectItem value="5">5 <Star className="inline h-3 w-3" /></SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={filterPrice} onValueChange={setFilterPrice}>
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue placeholder="Precio" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        <SelectItem value="budget">Económico (&lt;€150)</SelectItem>
-                        <SelectItem value="mid">Medio (€150-250)</SelectItem>
-                        <SelectItem value="luxury">Lujo (€250+)</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 {isLoadingHotels ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Cargando hoteles...
-                  </div>
-                ) : sortedHotels.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No se encontraron hoteles disponibles
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {sortedHotels.map((hotel) => {
-                      const price = Number(hotel.price || hotel.suggested_selling_price || 0);
-                      const isSelected = cartHotel?.hotelId === hotel.hotel_id;
-
-                      return (
-                        <div
-                          key={hotel.hotel_id}
-                          className={`rounded-lg border-2 overflow-hidden transition-all ${
-                            isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          }`}
-                        >
-                          {(hotel.thumbnail || hotel.main_photo) && (
-                            <div className="h-32 overflow-hidden">
-                              <img
-                                src={hotel.thumbnail || hotel.main_photo}
-                                alt={hotel.hotel_name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                  <div className="text-center py-8 text-muted-foreground">Cargando hoteles...</div>
+                ) : sortedHotels && sortedHotels.length > 0 ? (
+                  sortedHotels.map((hotel: any) => {
+                    const price = Number(hotel.package_price || hotel.suggested_selling_price || 0);
+                    const description = stripHtml(hotel.hotel_description || '');
+                    const isExpanded = expandedHotels[hotel.id];
+                    
+                    return (
+                      <div key={hotel.id} className="p-4 rounded-lg border space-y-3">
+                        <div className="flex gap-4">
+                          {hotel.thumbnail && (
+                            <img
+                              src={hotel.thumbnail}
+                              alt={hotel.name}
+                              className="w-32 h-24 object-cover rounded-lg"
+                            />
                           )}
-                          <div className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-semibold text-sm">{hotel.hotel_name}</h4>
-                              {isSelected && (
-                                <Badge variant="default" className="text-xs">✓</Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-1">
-                              {"⭐".repeat(hotel.stars || 0)}
-                              {hotel.rating && ` ${hotel.rating}/10`}
-                            </p>
-                            {hotel.distance_to_venue && (
-                              <p className="text-xs text-muted-foreground mb-2">
-                                {hotel.distance_to_venue.toFixed(1)} km del evento
-                              </p>
-                            )}
-                            {hotel.hotel_description && (
-                              <p className="text-xs text-muted-foreground mb-2">
-                                {expandedHotels[hotel.hotel_id] 
-                                  ? stripHtml(hotel.hotel_description)
-                                  : truncateText(stripHtml(hotel.hotel_description), 50)}
-                                {stripHtml(hotel.hotel_description).length > 50 && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleDescription(hotel.hotel_id);
-                                    }}
-                                    className="text-primary hover:underline ml-1"
-                                  >
-                                    {expandedHotels[hotel.hotel_id] ? "ver menos" : "ver más"}
-                                  </button>
-                                )}
-                              </p>
-                            )}
-                             <div className="flex items-center justify-between">
-                              <p className="text-lg font-bold text-primary">
-                                €{Math.round(price)}/noche
-                              </p>
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (isSelected && cartHotel) {
-                                        updateHotelNights(cartHotel.nights - 1);
-                                      }
-                                    }}
-                                    disabled={!isSelected || (cartHotel?.nights || 1) <= 1}
-                                  >
-                                    -
-                                  </Button>
-                                  <span className="text-sm font-semibold w-8 text-center">
-                                    {isSelected ? cartHotel?.nights : 1}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (isSelected && cartHotel) {
-                                        updateHotelNights(cartHotel.nights + 1);
-                                      }
-                                    }}
-                                    disabled={!isSelected}
-                                  >
-                                    +
-                                  </Button>
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h4 className="font-semibold">{hotel.name}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {hotel.stars && (
+                                    <div className="flex items-center text-yellow-500">
+                                      {Array.from({ length: hotel.stars }).map((_, i) => (
+                                        <Star key={i} className="h-4 w-4 fill-current" />
+                                      ))}
+                                    </div>
+                                  )}
+                                  {hotel.rating && (
+                                    <Badge variant="secondary">{hotel.rating}/10</Badge>
+                                  )}
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant={isSelected ? "default" : "outline"}
-                                  onClick={() => !isSelected && addHotelToCart(hotel)}
-                                  disabled={isSelected}
-                                >
-                                  {isSelected ? "✓" : "Añadir"}
-                                </Button>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {hotel.city}
+                                </p>
                               </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold">€{price.toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">por noche</p>
+                              </div>
+                            </div>
+
+                            {description && (
+                              <div className="mt-3">
+                                <p className="text-sm text-muted-foreground">
+                                  {isExpanded ? description : truncateText(description, 50)}
+                                </p>
+                                {description.length > 50 && (
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    className="h-auto p-0 mt-1"
+                                    onClick={() => toggleDescription(hotel.id)}
+                                  >
+                                    {isExpanded ? 'Ver menos' : 'Ver más'}
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 mt-3">
+                              <Select defaultValue="1" onValueChange={(value) => {
+                                // This would be used when adding to cart
+                              }}>
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {[1, 2, 3, 4, 5, 6, 7].map(num => (
+                                    <SelectItem key={num} value={num.toString()}>
+                                      {num} {num === 1 ? 'noche' : 'noches'}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addHotelToCart(hotel)}
+                              >
+                                Añadir
+                              </Button>
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No hay hoteles disponibles para este evento
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Cesta lateral */}
+          {/* Shopping Cart */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24">
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="text-xl text-center">
-                    {eventDetails.event_name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Tickets en la cesta */}
-                  {cartTickets.length > 0 ? (
-                    <div className="space-y-3">
-                      {cartTickets.map((ticket) => (
-                        <div key={ticket.priceId} className="p-3 bg-muted/30 rounded-lg">
-                          <div className="flex gap-3">
-                            {ticket.image && (
-                              <img 
-                                src={ticket.image} 
-                                alt={ticket.name}
-                                className="w-16 h-16 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <p className="font-medium text-sm">{ticket.name}</p>
-                                  <p className="text-xs text-muted-foreground">Código: {ticket.code}</p>
-                                  {ticket.description && (
-                                    <p className="text-xs text-muted-foreground mt-1">{ticket.description}</p>
-                                  )}
-                                  <p className="text-xs text-muted-foreground mt-1">{ticket.quantity} x €{ticket.price.toFixed(2)}</p>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => setCartTickets([])}
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </div>
-                              <p className="font-bold text-sm">Total: €{(ticket.price * ticket.quantity).toFixed(2)}</p>
-                            </div>
-                          </div>
+            <Card className="sticky top-24">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  {eventDetails.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Tickets in Cart */}
+                {cartTickets.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <Ticket className="h-4 w-4" />
+                      Entradas
+                    </h4>
+                    {cartTickets.map((ticket) => (
+                      <div key={ticket.priceId} className="flex items-center gap-2 p-2 rounded border bg-muted/30">
+                        {ticket.image && (
+                          <img src={ticket.image} alt={ticket.name} className="w-12 h-12 object-cover rounded" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{ticket.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ticket.quantity}x €{ticket.price.toFixed(2)}
+                          </p>
                         </div>
-                      ))}
-                      <Button
-                        variant="default"
-                        size="lg"
-                        className="w-full"
-                        asChild
-                      >
-                        <a href={eventDetails.event_url} target="_blank" rel="noopener noreferrer">
-                          Reservar entradas
-                        </a>
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Selecciona tus entradas
-                    </p>
-                  )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => removeTicketFromCart(ticket.priceId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                  {/* Hotel en la cesta */}
-                  {cartHotel && (
-                    <div className="pt-4 border-t space-y-3">
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <div className="flex gap-3">
-                          {cartHotel.image && (
-                            <img 
-                              src={cartHotel.image} 
-                              alt={cartHotel.name}
-                              className="w-16 h-16 object-cover rounded"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <p className="font-medium text-sm">{cartHotel.name}</p>
-                                <p className="text-xs text-muted-foreground">{cartHotel.nights} {cartHotel.nights === 1 ? 'noche' : 'noches'} x €{Math.round(cartHotel.pricePerNight)}</p>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => setCartHotel(null)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                            <p className="font-bold text-sm">
-                              Total: €{Math.round(cartHotel.pricePerNight * cartHotel.nights)}
-                            </p>
-                          </div>
-                        </div>
+                {/* Hotel in Cart */}
+                {cartHotel && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <Hotel className="h-4 w-4" />
+                      Hotel
+                    </h4>
+                    <div className="flex items-center gap-2 p-2 rounded border bg-muted/30">
+                      {cartHotel.image && (
+                        <img src={cartHotel.image} alt={cartHotel.name} className="w-12 h-12 object-cover rounded" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{cartHotel.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {cartHotel.nights} {cartHotel.nights === 1 ? 'noche' : 'noches'} x €{cartHotel.pricePerNight.toFixed(2)}
+                        </p>
                       </div>
                       <Button
-                        variant="default"
-                        size="lg"
-                        className="w-full"
-                        asChild
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={removeHotelFromCart}
                       >
-                        <a href={cartHotel.bookingUrl} target="_blank" rel="noopener noreferrer">
-                          Reservar hoteles
-                        </a>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Totales */}
-                  {(cartTickets.length > 0 || cartHotel) && (
-                    <div className="pt-4 space-y-3 border-t">
-                      {totalAttendees > 0 && (
-                        <div className="p-4 bg-primary/10 rounded-lg">
-                          <div className="text-center">
-                            <p className="text-xs text-muted-foreground mb-1">Total por persona</p>
-                            <p className="text-3xl font-bold text-primary">
-                              €{totalPerPerson.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {totalAttendees} {totalAttendees === 1 ? 'asistente' : 'asistentes'}
-                            </p>
-                          </div>
+                {cartTickets.length === 0 && !cartHotel && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Tu carrito está vacío
+                  </p>
+                )}
+
+                {(cartTickets.length > 0 || cartHotel) && (
+                  <>
+                    <div className="border-t pt-4 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Entradas</span>
+                        <span>€{getTicketsTotal().toFixed(2)}</span>
+                      </div>
+                      {cartHotel && (
+                        <div className="flex justify-between text-sm">
+                          <span>Hotel</span>
+                          <span>€{hotelTotal.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between font-bold text-lg">
+                      <div className="flex justify-between font-semibold text-lg pt-2 border-t">
                         <span>Total</span>
                         <span>€{totalPackage.toFixed(2)}</span>
                       </div>
+                      <div className="flex justify-between text-sm text-primary font-bold bg-primary/10 p-2 rounded">
+                        <span>Total por persona</span>
+                        <span>€{totalPerPerson.toFixed(2)}</span>
+                      </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+
+                    <div className="space-y-2 pt-4 border-t">
+                      {cartTickets.length > 0 && (
+                        <Button className="w-full" size="lg">
+                          Reservar entradas
+                        </Button>
+                      )}
+                      {cartHotel && (
+                        <Button variant="outline" className="w-full" size="lg" asChild>
+                          <a href={cartHotel.bookingUrl} target="_blank" rel="noopener noreferrer">
+                            Reservar hoteles
+                            <ExternalLink className="h-4 w-4 ml-2" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
