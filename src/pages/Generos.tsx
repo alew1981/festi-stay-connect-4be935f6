@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, MapPin, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +17,7 @@ const Generos = () => {
   const artistFromUrl = searchParams.get("artist");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(artistFromUrl);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterGenre, setFilterGenre] = useState("all");
 
   useEffect(() => {
     if (artistFromUrl) {
@@ -28,7 +30,7 @@ const Generos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tm_tbl_attractions")
-        .select("attraction_id, name, image_standard_url, event_count")
+        .select("attraction_id, name, image_standard_url, event_count, genre, subgenre")
         .gt("event_count", 0)
         .order("event_count", { ascending: false });
       
@@ -37,10 +39,15 @@ const Generos = () => {
         main_attraction_id: a.attraction_id,
         main_attraction_name: a.name,
         attraction_image_standard_url: a.image_standard_url,
-        event_count: a.event_count
+        event_count: a.event_count,
+        genre: a.genre,
+        subgenre: a.subgenre
       }));
     },
   });
+
+  // Get unique genres for filter
+  const genres = Array.from(new Set(artists?.map((a: any) => a.genre).filter(Boolean)));
 
   const { data: artistEvents, isLoading: isLoadingEvents } = useQuery({
     queryKey: ["artistEvents", selectedArtist],
@@ -60,9 +67,11 @@ const Generos = () => {
     enabled: !!selectedArtist,
   });
 
-  const filteredArtists = artists?.filter((artist: any) =>
-    artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredArtists = artists?.filter((artist: any) => {
+    const matchesSearch = artist.main_attraction_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGenre = filterGenre === "all" || artist.genre === filterGenre;
+    return matchesSearch && matchesGenre;
+  });
 
   const selectedArtistData = artists?.find((a: any) => a.main_attraction_id === selectedArtist);
 
@@ -170,8 +179,8 @@ const Generos = () => {
           </p>
         </div>
 
-        <div className="mb-6">
-          <div className="relative">
+        <div className="mb-6 flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
@@ -181,6 +190,17 @@ const Generos = () => {
               className="pl-10"
             />
           </div>
+          <Select value={filterGenre} onValueChange={setFilterGenre}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Filtrar por género" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los géneros</SelectItem>
+              {genres?.map(genre => (
+                <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {isLoadingArtists ? (
@@ -190,42 +210,35 @@ const Generos = () => {
             {filteredArtists?.map((artist: any) => (
               <Card
                 key={artist.main_attraction_id}
-                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer relative"
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
                 onClick={() => setSelectedArtist(artist.main_attraction_id)}
               >
-                <div className="relative h-32">
-                  {artist.attraction_image_standard_url && (
+                <div className="relative h-48 overflow-hidden">
+                  {artist.attraction_image_standard_url ? (
                     <img
                       src={artist.attraction_image_standard_url}
                       alt={artist.main_attraction_name}
-                      className="w-full h-full object-cover opacity-30"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                  ) : (
+                    <div className="w-full h-full bg-muted" />
                   )}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h3 className="font-bold text-2xl text-center px-4 z-10">{artist.main_attraction_name}</h3>
-                  </div>
                 </div>
                 <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-3">Artista</p>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="secondary">
+                  <h3 className="font-bold text-xl mb-3">{artist.main_attraction_name}</h3>
+                  <div className="space-y-2">
+                    <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
                       {artist.event_count} eventos próximos
                     </Badge>
-                  </div>
-                  {artist.event_date && (
-                    <div className="pt-3 border-t">
-                      <p className="text-xs text-muted-foreground mb-1">Próximo evento:</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(artist.event_date).toLocaleDateString('es-ES', { 
-                          day: 'numeric', 
-                          month: 'short'
-                        })}
+                    {artist.genre && (
+                      <p className="text-sm text-muted-foreground">
+                        {artist.genre}
                       </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </CardContent>
                 <CardFooter className="p-6 pt-0">
-                  <Button className="w-full">
+                  <Button variant="accent" className="w-full">
                     Ver Eventos
                   </Button>
                 </CardFooter>
