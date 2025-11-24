@@ -42,6 +42,7 @@ const Producto = () => {
   const [sortBy, setSortBy] = useState("rating");
   const [expandedHotels, setExpandedHotels] = useState<{ [key: string]: boolean }>({});
   const [filterStars, setFilterStars] = useState("all");
+  const [showAllTickets, setShowAllTickets] = useState(false);
 
   // Obtener detalles del evento
   const { data: eventDetails, isLoading: isLoadingEvent } = useQuery({
@@ -378,51 +379,63 @@ const Producto = () => {
                 {isLoadingTickets ? (
                   <div className="text-center py-8 text-muted-foreground">Cargando entradas...</div>
                 ) : ticketPrices && ticketPrices.length > 0 ? (
-                  ticketPrices.map((ticket) => {
-                    const currentTicket = cartTickets.find(t => t.priceId === ticket.id.toString());
-                    const quantity = currentTicket?.quantity || 0;
-                    
-                    return (
-                      <div key={ticket.id} className="flex items-center justify-between p-4 rounded-lg border">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold">{ticket.price_type_name || 'Entrada'}</h4>
-                            {ticket.price_type_code && (
-                              <Badge variant="outline" className="text-xs">
-                                {ticket.price_type_code}
-                              </Badge>
+                  <>
+                    {(showAllTickets ? ticketPrices : ticketPrices.slice(0, 5)).map((ticket) => {
+                      const currentTicket = cartTickets.find(t => t.priceId === ticket.id.toString());
+                      const quantity = currentTicket?.quantity || 0;
+                      
+                      return (
+                        <div key={ticket.id} className="flex items-center justify-between p-4 rounded-lg border">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold">{ticket.price_type_name || 'Entrada'}</h4>
+                              {ticket.price_type_code && (
+                                <Badge variant="outline" className="text-xs">
+                                  {ticket.price_type_code}
+                                </Badge>
+                              )}
+                            </div>
+                            {ticket.price_type_description && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {ticket.price_type_description}
+                              </p>
                             )}
-                          </div>
-                          {ticket.price_type_description && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {ticket.price_type_description}
+                            <p className="text-lg font-bold mt-2">
+                              €{Number(ticket.total_price).toFixed(2)}
                             </p>
-                          )}
-                          <p className="text-lg font-bold mt-2">
-                            €{Number(ticket.total_price).toFixed(2)}
-                          </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <Select
+                              value={quantity.toString()}
+                              onValueChange={(value) => updateTicketInCart(ticket.id.toString(), parseInt(value))}
+                            >
+                              <SelectTrigger className="w-24">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                  <SelectItem key={num} value={num.toString()}>
+                                    {num}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <Select
-                            value={quantity.toString()}
-                            onValueChange={(value) => updateTicketInCart(ticket.id.toString(), parseInt(value))}
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                                <SelectItem key={num} value={num.toString()}>
-                                  {num}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                    
+                    {ticketPrices.length > 5 && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowAllTickets(!showAllTickets)}
+                      >
+                        {showAllTickets ? 'Ver menos' : `Ver más (${ticketPrices.length - 5} más)`}
+                      </Button>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     No hay entradas disponibles en este momento
