@@ -11,11 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Calendar, MapPin, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface CityData {
+  city_name: string;
+  country: string;
+  upcoming_events: number;
+  city_slug: string;
+  next_event_name?: string;
+  next_event_date?: string;
+}
+
 const Destinos = () => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: cities, isLoading: isLoadingCities } = useQuery({
+  const { data: cities, isLoading: isLoadingCities } = useQuery<CityData[]>({
     queryKey: ["cities"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,16 +37,16 @@ const Destinos = () => {
       if (error) throw error;
       
       // Aggregate by city
-      const cityCounts = data.reduce((acc: any, item) => {
-        const city = item.venue_city;
+      const cityCounts = data.reduce((acc: Record<string, CityData>, item) => {
+        const city = item.venue_city!;
         if (!acc[city]) {
           acc[city] = {
             city_name: city,
-            country: item.venue_country,
+            country: item.venue_country || '',
             upcoming_events: 0,
             city_slug: city.toLowerCase().replace(/\s+/g, '-'),
             next_event_name: item.name,
-            next_event_date: item.event_date
+            next_event_date: item.event_date || undefined
           };
         }
         acc[city].upcoming_events++;
@@ -45,7 +54,7 @@ const Destinos = () => {
       }, {});
       
       return Object.values(cityCounts)
-        .sort((a: any, b: any) => b.upcoming_events - a.upcoming_events);
+        .sort((a, b) => b.upcoming_events - a.upcoming_events);
     },
   });
 
@@ -68,11 +77,11 @@ const Destinos = () => {
     enabled: !!selectedCity,
   });
 
-  const filteredCities = cities?.filter((city: any) =>
+  const filteredCities = cities?.filter((city) =>
     city.city_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedCityData: any = cities?.find((c: any) => c.city_name === selectedCity);
+  const selectedCityData = cities?.find((c) => c.city_name === selectedCity);
 
   if (selectedCity && selectedCityData) {
     return (
