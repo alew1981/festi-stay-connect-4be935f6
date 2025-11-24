@@ -171,7 +171,7 @@ const FeaturedEvents = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {subgenres?.map((subgenre) => (
-              <Link key={subgenre.id} to={`/categorias/${subgenre.id}`} className="group">
+              <Link key={subgenre.id} to={`/musica?genre=${encodeURIComponent(subgenre.name)}`} className="group">
                 <Card className="p-8 text-center group-hover:-translate-y-1">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
