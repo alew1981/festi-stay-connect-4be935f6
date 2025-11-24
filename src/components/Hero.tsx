@@ -77,13 +77,13 @@ const Hero = () => {
   };
 
   const handleArtistClick = (artistId: string) => {
-    navigate(`/generos?artist=${artistId}`);
+    navigate(`/musica?artist=${artistId}`);
     setIsOpen(false);
     setSearchQuery("");
   };
 
-  const handleSubgenreClick = (subgenreId: number) => {
-    navigate(`/categorias/${subgenreId}`);
+  const handleSubgenreClick = (subgenreName: string) => {
+    navigate(`/musica?genre=${encodeURIComponent(subgenreName)}`);
     setIsOpen(false);
     setSearchQuery("");
   };
@@ -199,7 +199,7 @@ const Hero = () => {
                           {searchResults.subgenres.map((subgenre) => (
                             <CommandItem
                               key={subgenre.id}
-                              onSelect={() => handleSubgenreClick(subgenre.id)}
+                              onSelect={() => handleSubgenreClick(subgenre.name)}
                               className="cursor-pointer"
                             >
                               <p className="font-medium">{subgenre.name}</p>

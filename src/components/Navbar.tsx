@@ -40,18 +40,11 @@ const Navbar = () => {
               Eventos
             </NavLink>
             <NavLink
-              to="/generos"
+              to="/musica"
               className="text-foreground/80 hover:text-foreground transition-colors"
               activeClassName="text-foreground font-semibold"
             >
-              Artistas
-            </NavLink>
-            <NavLink
-              to="/categorias"
-              className="text-foreground/80 hover:text-foreground transition-colors"
-              activeClassName="text-foreground font-semibold"
-            >
-              Géneros
+              Música
             </NavLink>
             <NavLink
               to="/destinos"
@@ -127,20 +120,12 @@ const Navbar = () => {
               Eventos
             </NavLink>
             <NavLink
-              to="/generos"
+              to="/musica"
               className="block text-foreground/80 hover:text-foreground transition-colors py-2"
               activeClassName="text-foreground font-semibold"
               onClick={() => setIsMenuOpen(false)}
             >
-              Artistas
-            </NavLink>
-            <NavLink
-              to="/categorias"
-              className="block text-foreground/80 hover:text-foreground transition-colors py-2"
-              activeClassName="text-foreground font-semibold"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Géneros
+              Música
             </NavLink>
             <NavLink
               to="/destinos"
