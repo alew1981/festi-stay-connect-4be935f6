@@ -65,14 +65,20 @@ const Destinos = () => {
       
       const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("event_id, name, venue_city, venue_name, event_date, image_standard_url, min_price, main_attraction_name, domain_id")
+        .select("id, name, venue_city, venue_name, event_date, image_standard_url, price_min_excl_fees, attraction_names")
         .eq("venue_city", selectedCity)
-        .gt("event_date", new Date().toISOString())
+        .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .limit(50);
       
       if (error) throw error;
-      return data?.map(e => ({ ...e, event_name: e.name }));
+      return data?.map(e => ({
+        ...e,
+        event_id: e.id,
+        event_name: e.name,
+        min_price: e.price_min_excl_fees,
+        main_attraction_name: e.attraction_names?.[0] || null
+      }));
     },
     enabled: !!selectedCity,
   });
@@ -119,41 +125,40 @@ const Destinos = () => {
                 });
 
                 return (
-                  <Card key={event.event_id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="h-48 overflow-hidden">
-                      <img
-                        src={event.image_standard_url || "/placeholder.svg"}
-                        alt={event.event_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-bold text-lg mb-2 line-clamp-2">{event.event_name}</h3>
-                      {event.main_attraction_name && (
-                        <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
-                      )}
-                      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-primary" />
-                          <span>{formattedDate}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-secondary" />
-                          <span>{event.venue_name}</span>
-                        </div>
+                  <Link key={event.event_id} to={`/producto/${event.event_id}`}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="h-48 overflow-hidden">
+                        <img
+                          src={event.image_standard_url || "/placeholder.svg"}
+                          alt={event.event_name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      {event.min_price && (
-                        <div className="mt-3">
-                          <Badge variant="secondary">Desde €{Number(event.min_price).toFixed(2)}</Badge>
+                      <CardContent className="p-4">
+                        <h3 className="font-bold text-lg mb-2 line-clamp-2">{event.event_name}</h3>
+                        {event.main_attraction_name && (
+                          <p className="text-sm text-muted-foreground mb-2">{event.main_attraction_name}</p>
+                        )}
+                        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-accent" />
+                            <span>{formattedDate}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-accent" />
+                            <span>{event.venue_name}</span>
+                          </div>
                         </div>
-                      )}
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0">
-                    <Button asChild className="w-full">
-                      <Link to={`/producto/${event.event_id}?domain=${event.domain_id}`}>Ver Detalles</Link>
-                    </Button>
-                    </CardFooter>
-                  </Card>
+                        {event.min_price && (
+                          <div className="mt-3">
+                            <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+                              Desde €{Number(event.min_price).toFixed(2)}
+                            </Badge>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
                 );
               })}
             </div>
@@ -208,7 +213,7 @@ const Destinos = () => {
                       <h3 className="font-bold text-xl mb-1">{city.city_name}</h3>
                       <p className="text-sm text-muted-foreground">{city.country}</p>
                     </div>
-                    <MapPin className="h-6 w-6 text-primary" />
+                    <MapPin className="h-6 w-6 text-accent" />
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">
@@ -231,7 +236,7 @@ const Destinos = () => {
                   )}
                 </CardContent>
                 <CardFooter className="p-6 pt-0">
-                  <Button className="w-full">
+                  <Button className="w-full bg-[#00FF8F] hover:bg-[#00FF8F]/90 text-[#121212] font-bold">
                     Ver Eventos
                   </Button>
                 </CardFooter>

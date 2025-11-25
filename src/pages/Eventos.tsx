@@ -26,13 +26,19 @@ const Eventos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("event_id, name, venue_city, venue_name, event_date, image_standard_url, min_price, venue_country, main_attraction_name, venue_latitude, venue_longitude, domain_id")
-        .gt("event_date", new Date().toISOString())
+        .select("id, name, venue_city, venue_name, event_date, image_standard_url, price_min_excl_fees, venue_country, attraction_names, venue_latitude, venue_longitude")
+        .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true })
         .range((page - 1) * EVENTS_PER_PAGE, page * EVENTS_PER_PAGE - 1);
       
       if (error) throw error;
-      return data?.map(e => ({ ...e, event_name: e.name }));
+      return data?.map(e => ({ 
+        ...e, 
+        event_id: e.id,
+        event_name: e.name,
+        min_price: e.price_min_excl_fees,
+        main_attraction_name: e.attraction_names?.[0] || null
+      }));
     },
   });
 
@@ -196,7 +202,7 @@ const Eventos = () => {
               const daysRemaining = Math.ceil((eventDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
                 return (
-                  <Link key={event.event_id} to={`/producto/${event.event_id}?domain=${event.domain_id}`} className="group">
+                  <Link key={event.event_id} to={`/producto/${event.event_id}`} className="group">
                     <Card className="overflow-hidden h-full group-hover:-translate-y-1">
                       <div className="h-48 overflow-hidden relative">
                         <img
@@ -204,9 +210,9 @@ const Eventos = () => {
                           alt={event.event_name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                        {daysRemaining > 0 && (
-                          <Badge className="absolute top-3 left-3 bg-accent/90 text-accent-foreground">
-                            {daysRemaining === 1 ? '¡Mañana!' : `En ${daysRemaining} días`}
+                        {daysRemaining > 0 && daysRemaining <= 7 && (
+                          <Badge className="absolute top-3 left-3 bg-[#00FF8F] text-[#121212] font-bold border-0 px-3 py-1">
+                            {daysRemaining === 1 ? '¡MAÑANA!' : `EN ${daysRemaining} DÍAS`}
                           </Badge>
                         )}
                       </div>
