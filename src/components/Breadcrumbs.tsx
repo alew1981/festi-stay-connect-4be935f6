@@ -13,7 +13,7 @@ const Breadcrumbs = () => {
   const artistId = searchParams.get('artist');
   const artistDetails = null;
 
-  // Get event name for product page using correct column name
+  // Get event name and categories for product page using correct column name
   const { data: eventDetails } = useQuery({
     queryKey: ["event-breadcrumb", params.id],
     queryFn: async () => {
@@ -21,7 +21,7 @@ const Breadcrumbs = () => {
       
       const { data, error } = await supabase
         .from("tm_tbl_events")
-        .select("name")
+        .select("name, categories")
         .eq("id", params.id)
         .maybeSingle();
       
@@ -30,6 +30,16 @@ const Breadcrumbs = () => {
     },
     enabled: !!params.id && pathnames[0] === "producto",
   });
+
+  // Extract genre from event categories
+  const eventGenre = (() => {
+    if (!eventDetails?.categories || !Array.isArray(eventDetails.categories)) return null;
+    const firstCategory = eventDetails.categories[0] as any;
+    if (firstCategory?.subcategories && Array.isArray(firstCategory.subcategories)) {
+      return firstCategory.subcategories[0]?.name || null;
+    }
+    return null;
+  })();
 
   const breadcrumbNames: Record<string, string> = {
     about: "Nosotros",
@@ -51,8 +61,34 @@ const Breadcrumbs = () => {
         <Home className="h-4 w-4" />
         <span>Inicio</span>
       </Link>
-      {/* For product page, show: Inicio > Eventos > Event */}
-      {pathnames[0] === "producto" && eventDetails ? (
+      {/* For product page with genre: Inicio > Música > Género > Evento */}
+      {pathnames[0] === "producto" && eventDetails && eventGenre ? (
+        <>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              to="/musica"
+              className="hover:text-foreground transition-colors"
+            >
+              Música
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              to={`/musica/${encodeURIComponent(eventGenre)}`}
+              className="hover:text-foreground transition-colors"
+            >
+              {eventGenre}
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">{eventDetails.name}</span>
+          </div>
+        </>
+      ) : pathnames[0] === "producto" && eventDetails ? (
+        /* For product page without genre: Inicio > Eventos > Event */
         <>
           <div className="flex items-center gap-2">
             <ChevronRight className="h-4 w-4" />
