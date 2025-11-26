@@ -82,7 +82,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
   return (
     <Link to={`/producto/${event.event_id}`} className="group block">
       {viewMode === "grid" ? (
-        <Card className="overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover border-0">
+        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border border-border/20 shadow-lg">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
             <div className="relative h-56 overflow-hidden">
@@ -97,17 +97,17 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
               {/* Date Card - Absolute positioned on the left */}
-              <div className="absolute -left-3 top-4 bg-white rounded-xl shadow-2xl overflow-hidden z-10 border-2 border-gray-100" style={{ width: '120px' }}>
-                <div className="text-center px-3 py-3 bg-gradient-to-b from-gray-50 to-white">
-                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{monthName}</div>
-                  <div className="text-5xl font-black text-gray-900 leading-none my-2">{dayNumber}</div>
-                  <div className="text-sm font-semibold text-gray-600 mb-2">{year}</div>
+              <div className="absolute left-2 top-3 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
+                <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
+                  <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
+                  <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
+                  <div className="text-xs font-semibold text-gray-600 mb-1">{year}</div>
                   {/* Time */}
-                  <div className="text-base font-bold text-gray-900 border-t border-gray-200 pt-2">{time}h</div>
+                  <div className="text-sm font-bold text-gray-900 border-t border-gray-200 pt-1.5">{time}h</div>
                   {/* Location */}
-                  <div className="flex items-start gap-1 text-xs text-gray-600 mt-2">
-                    <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                    <span className="line-clamp-2 font-medium text-left">
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-gray-600 mt-1">
+                    <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                    <span className="line-clamp-1 font-medium">
                       {event.venue_city}
                     </span>
                   </div>
@@ -115,37 +115,37 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
               </div>
 
               {/* Countdown Timer and Badge - Top Right */}
-              <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+              <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                 {showCountdown && (
-                  <div className="bg-black/90 backdrop-blur-md rounded-lg px-4 py-3 shadow-2xl border border-white/20">
-                    <div className="flex gap-3 text-accent font-mono text-center">
+                  <div className="bg-black/90 backdrop-blur-md rounded-md px-2.5 py-1.5 shadow-xl border border-white/20">
+                    <div className="flex gap-1.5 text-accent font-mono text-center">
                       {isLessThan24Hours ? (
                         <>
                           <div className="flex flex-col items-center">
-                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
-                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">HRS</div>
+                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">HRS</div>
                           </div>
-                          <div className="text-3xl font-black self-center leading-none pb-3">:</div>
+                          <div className="text-xl font-black self-center leading-none pb-2">:</div>
                           <div className="flex flex-col items-center">
-                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.minutes).padStart(2, '0')}</div>
-                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">MIN</div>
+                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.minutes).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">MIN</div>
                           </div>
-                          <div className="text-3xl font-black self-center leading-none pb-3">:</div>
+                          <div className="text-xl font-black self-center leading-none pb-2">:</div>
                           <div className="flex flex-col items-center">
-                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.seconds).padStart(2, '0')}</div>
-                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">SEG</div>
+                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.seconds).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">SEG</div>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="flex flex-col items-center">
-                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.days).padStart(2, '0')}</div>
-                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">DÍAS</div>
+                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.days).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">DÍAS</div>
                           </div>
-                          <div className="text-3xl font-black self-center leading-none pb-3">:</div>
+                          <div className="text-xl font-black self-center leading-none pb-2">:</div>
                           <div className="flex flex-col items-center">
-                            <div className="text-3xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
-                            <div className="text-[8px] uppercase font-bold tracking-widest text-white/80 mt-1">HRS</div>
+                            <div className="text-xl font-black leading-none tabular-nums">{String(countdown.hours).padStart(2, '0')}</div>
+                            <div className="text-[7px] uppercase font-bold tracking-wider text-white/80 mt-0.5">HRS</div>
                           </div>
                         </>
                       )}
@@ -153,7 +153,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                   </div>
                 )}
                 {badgeText && badgeVariant && (
-                  <Badge variant={badgeVariant} className="text-xs font-bold px-3 py-1.5">
+                  <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
                     {badgeText}
                   </Badge>
                 )}
@@ -162,16 +162,16 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
 
             {/* Event Name Below Image */}
             <div className="bg-background px-4 pt-4 pb-2">
-              <h3 className="text-foreground text-xl font-black line-clamp-2 leading-tight tracking-tight">
+              <h3 className="text-foreground text-lg font-black truncate leading-tight tracking-tight" title={event.event_name}>
                 {event.event_name}
               </h3>
             </div>
 
             {/* Bottom Section with Button */}
             <div className="bg-background px-4 pb-4 flex justify-center items-center">
-              <Button variant="primary" size="lg" className="gap-2 w-full flex items-center justify-center">
+              <Button variant="primary" size="lg" className="gap-2 w-full flex items-center justify-center transition-all duration-300 group-hover:gap-3">
                 <span>Entradas</span>
-                <span>→</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                 <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
               </Button>
             </div>
@@ -179,7 +179,7 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
         </Card>
       ) : (
         // List View
-        <Card className="overflow-hidden transition-all duration-200 hover:shadow-card-hover border-0">
+        <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl border border-border/20 shadow-lg">
           <div className="flex flex-row h-40">
             {/* Image Section - Left */}
             <div className="relative w-64 flex-shrink-0 overflow-hidden">
