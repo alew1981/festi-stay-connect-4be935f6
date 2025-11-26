@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArtistCardSkeleton } from "@/components/ui/skeleton-loader";
+import { useInView } from "react-intersection-observer";
 
 const Artistas = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,6 +20,11 @@ const Artistas = () => {
   const [filterCity, setFilterCity] = useState<string>("all");
   const [filterGenre, setFilterGenre] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
+  const [displayCount, setDisplayCount] = useState<number>(30);
+  
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0
+  });
 
   // Query for unique artists extracted from events with more details
   const { data: artists, isLoading: isLoadingArtists } = useQuery({
@@ -39,7 +45,11 @@ const Artistas = () => {
           event.attraction_names.forEach((name: string) => {
             if (!artistMap.has(name)) {
               const categories = Array.isArray(event.categories) ? event.categories : [];
-              const genres = categories.map((cat: any) => cat.subGenre?.name).filter(Boolean) || [];
+              const genres = categories.flatMap((cat: any) => 
+                Array.isArray(cat.subcategories) 
+                  ? cat.subcategories.map((sub: any) => sub.name) 
+                  : []
+              ).filter(Boolean);
               artistMap.set(name, {
                 main_attraction_name: name,
                 event_count: 1,
@@ -53,7 +63,11 @@ const Artistas = () => {
               artist.event_count++;
               if (event.venue_city) artist.cities.add(event.venue_city);
               const categories = Array.isArray(event.categories) ? event.categories : [];
-              const genres = categories.map((cat: any) => cat.subGenre?.name).filter(Boolean) || [];
+              const genres = categories.flatMap((cat: any) => 
+                Array.isArray(cat.subcategories) 
+                  ? cat.subcategories.map((sub: any) => sub.name) 
+                  : []
+              ).filter(Boolean);
               genres.forEach((g: string) => artist.genres.add(g));
               artist.dates.push(event.event_date);
             }
@@ -153,6 +167,18 @@ const Artistas = () => {
     
     return matchesSearch && matchesCity && matchesGenre && matchesDate;
   });
+
+  // Display only the first displayCount artists
+  const displayedArtists = useMemo(() => {
+    return filteredArtists?.slice(0, displayCount) || [];
+  }, [filteredArtists, displayCount]);
+
+  // Load more when scrolling to bottom
+  useMemo(() => {
+    if (inView && filteredArtists && displayedArtists.length < filteredArtists.length) {
+      setDisplayCount(prev => Math.min(prev + 30, filteredArtists.length));
+    }
+  }, [inView, displayedArtists.length, filteredArtists]);
 
   const selectedArtistData = artists?.find((a: any) => a.main_attraction_name === selectedArtist);
 
@@ -326,13 +352,6 @@ const Artistas = () => {
           </div>
         </div>
 
-        {/* Results count */}
-        <div className="mb-6">
-          <p className="text-muted-foreground">
-            {filteredArtists?.length || 0} artistas encontrados
-          </p>
-        </div>
-
         {/* Artist Cards */}
         {isLoadingArtists ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -341,8 +360,9 @@ const Artistas = () => {
             ))}
           </div>
         ) : filteredArtists && filteredArtists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArtists.map((artist: any) => (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayedArtists.map((artist: any, index) => (
               <Card
                 key={artist.main_attraction_name}
                 className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 relative"
@@ -380,6 +400,17 @@ const Artistas = () => {
               </Card>
             ))}
           </div>
+          
+          {/* Infinite Scroll Loader */}
+          {displayedArtists.length < filteredArtists.length && (
+            <div ref={loadMoreRef} className="flex justify-center items-center py-12">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+                <p className="text-sm text-muted-foreground font-['Poppins']">Cargando más artistas...</p>
+              </div>
+            </div>
+          )}
+        </>
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">No se encontraron artistas con esos criterios</p>
