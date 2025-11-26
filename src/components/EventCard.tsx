@@ -96,8 +96,17 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
               {/* Minimal Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
+              {/* Badge "Disponible" - Top Left above Date Card */}
+              {badgeText && badgeVariant && (
+                <div className="absolute left-2 top-0.5 z-20">
+                  <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
+                    {badgeText}
+                  </Badge>
+                </div>
+              )}
+
               {/* Date Card - Absolute positioned on the left */}
-              <div className="absolute left-2 top-3 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
+              <div className="absolute left-2 top-8 bg-white rounded-lg shadow-xl overflow-hidden z-10 border border-gray-200" style={{ width: '85px' }}>
                 <div className="text-center px-2 py-2 bg-gradient-to-b from-gray-50 to-white">
                   <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">{monthName}</div>
                   <div className="text-3xl font-black text-gray-900 leading-none my-1">{dayNumber}</div>
@@ -114,10 +123,10 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                 </div>
               </div>
 
-              {/* Countdown Timer and Badge - Top Right */}
+              {/* Countdown Timer - Top Right */}
               <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
                 {showCountdown && (
-                  <div className={`bg-black/90 backdrop-blur-md rounded-md px-3 py-2 shadow-xl border ${isLessThan24Hours ? 'border-accent shadow-accent/50 shadow-lg animate-pulse' : 'border-accent/30'}`}>
+                  <div className="bg-black/90 backdrop-blur-md rounded-md px-3 py-2 shadow-xl border border-accent/30">
                     <div className="flex gap-2 text-accent font-['Poppins'] text-center">
                       {isLessThan24Hours ? (
                         <>
@@ -151,11 +160,6 @@ const EventCard = ({ event, viewMode = "grid" }: EventCardProps) => {
                       )}
                     </div>
                   </div>
-                )}
-                {badgeText && badgeVariant && (
-                  <Badge variant={badgeVariant} className="text-[10px] font-bold px-2 py-1">
-                    {badgeText}
-                  </Badge>
                 )}
               </div>
             </div>
