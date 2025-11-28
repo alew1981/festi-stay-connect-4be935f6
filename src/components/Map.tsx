@@ -8,6 +8,7 @@ interface MapProps {
   events?: Array<{
     event_id: string;
     event_name: string;
+    event_slug: string;
     venue_latitude: number;
     venue_longitude: number;
     venue_city: string;
@@ -57,7 +58,7 @@ const Map = ({ events = [] }: MapProps) => {
           `<div style="padding: 8px;">
             <h3 style="font-weight: bold; margin-bottom: 4px;">${event.event_name}</h3>
             <p style="font-size: 12px; color: #666;">${event.venue_city}</p>
-            <a href="/producto/${event.event_id}" style="color: hsl(var(--primary)); text-decoration: underline; font-size: 12px;">Ver detalles</a>
+            <a href="/producto/${event.event_slug}" style="color: hsl(var(--primary)); text-decoration: underline; font-size: 12px;">Ver detalles</a>
           </div>`
         );
 

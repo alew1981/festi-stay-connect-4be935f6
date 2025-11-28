@@ -90,8 +90,8 @@ const Artistas = () => {
       if (!selectedArtist) return null;
       
       const { data, error } = await supabase
-        .from("tm_tbl_events")
-        .select("id, name, venue_city, venue_name, event_date, image_standard_url, price_min_excl_fees")
+        .from("vw_events_with_hotels")
+        .select("event_id, event_name, event_slug, venue_city, venue_name, event_date, image_standard_url, ticket_price_min_no_fees")
         .contains("attraction_names", [selectedArtist])
         .gte("event_date", new Date().toISOString())
         .order("event_date", { ascending: true });
@@ -99,9 +99,10 @@ const Artistas = () => {
       if (error) throw error;
       return data?.map(e => ({ 
         ...e, 
-        event_id: e.id,
-        event_name: e.name,
-        min_price: e.price_min_excl_fees
+        id: e.event_id,
+        name: e.event_name,
+        min_price: e.ticket_price_min_no_fees,
+        price_min_excl_fees: e.ticket_price_min_no_fees
       }));
     },
     enabled: !!selectedArtist,
@@ -230,7 +231,7 @@ const Artistas = () => {
                 });
 
                 return (
-                  <Link key={event.event_id} to={`/producto/${event.event_id}`}>
+                  <Link key={event.event_id} to={`/producto/${event.event_slug}`}>
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
                       <div className="relative h-48 overflow-hidden">
                         <img

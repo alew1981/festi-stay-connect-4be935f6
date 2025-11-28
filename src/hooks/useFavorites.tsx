@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export interface FavoriteEvent {
   event_id: string;
   event_name: string;
+  event_slug: string;
   event_date: string;
   venue_city: string;
   image_url?: string;

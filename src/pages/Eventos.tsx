@@ -37,6 +37,7 @@ const Eventos = () => {
       } = await supabase.from("vw_events_with_hotels").select(`
           event_id,
           event_name,
+          event_slug,
           event_date,
           venue_city,
           image_standard_url,

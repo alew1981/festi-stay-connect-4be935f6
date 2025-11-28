@@ -28,9 +28,9 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
       if (!searchTerm || searchTerm.length < 2) return [];
       
       const { data, error} = await supabase
-        .from("tm_tbl_events")
-        .select("id, name, event_date, venue_city, venue_name, image_standard_url")
-        .or(`name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%`)
+        .from("vw_events_with_hotels")
+        .select("event_id, event_name, event_slug, event_date, venue_city, venue_name, image_standard_url")
+        .or(`event_name.ilike.%${searchTerm}%,venue_city.ilike.%${searchTerm}%`)
         .order("event_date", { ascending: true })
         .limit(10);
       
@@ -40,8 +40,8 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
     enabled: searchTerm.length >= 2,
   });
 
-  const handleResultClick = (eventId: string) => {
-    navigate(`/producto/${eventId}`);
+  const handleResultClick = (eventSlug: string) => {
+    navigate(`/producto/${eventSlug}`);
     onClose();
     setSearchTerm("");
   };
@@ -92,19 +92,19 @@ const SearchBar = ({ isOpen, onClose }: SearchBarProps) => {
           
           {searchResults?.map((result) => (
             <button
-              key={result.id}
-              onClick={() => handleResultClick(result.id)}
+              key={result.event_id}
+              onClick={() => handleResultClick(result.event_slug)}
               className="w-full p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/30 transition-all text-left flex gap-3"
             >
               {result.image_standard_url && (
                 <img
                   src={result.image_standard_url}
-                  alt={result.name}
+                  alt={result.event_name}
                   className="w-16 h-16 object-cover rounded"
                 />
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm truncate">{result.name}</h3>
+                <h3 className="font-semibold text-sm truncate">{result.event_name}</h3>
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />

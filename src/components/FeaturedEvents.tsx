@@ -16,6 +16,7 @@ const FeaturedEvents = () => {
         .select(`
           event_id,
           event_name,
+          event_slug,
           event_date,
           venue_city,
           image_standard_url,

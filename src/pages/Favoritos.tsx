@@ -80,7 +80,7 @@ const Favoritos = () => {
                     </div>
                   </div>
                   <Button asChild className="w-full">
-                    <Link to={`/producto/${favorite.event_id}`}>
+                    <Link to={`/producto/${favorite.event_slug}`}>
                       Ver Detalles
                     </Link>
                   </Button>
