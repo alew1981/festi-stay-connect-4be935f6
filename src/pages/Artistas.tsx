@@ -278,11 +278,11 @@ const Artistas = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8 mt-20">
-        <Breadcrumbs />
         
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Artistas</h1>
-          <p className="text-muted-foreground text-lg">
+        <div className="mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-2">Artistas</h1>
+          <Breadcrumbs />
+          <p className="text-muted-foreground text-lg mt-2">
             Explora nuestra colección completa de {artists?.length || 0} artistas
           </p>
         </div>

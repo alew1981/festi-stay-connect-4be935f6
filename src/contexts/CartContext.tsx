@@ -56,6 +56,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [cart]);
 
+  // Sync cart across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'feelomove_cart') {
+        setCart(e.newValue ? JSON.parse(e.newValue) : null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const addTickets = (eventId: string, eventDetails: any, tickets: CartTicket[]) => {
     setCart({
       event_id: eventId,

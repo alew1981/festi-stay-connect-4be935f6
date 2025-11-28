@@ -78,8 +78,10 @@ const EventCard = ({ event }: EventCardProps) => {
     badgeText = "DISPONIBLE";
   }
 
+  const eventUrl = `/producto/${event.event_name.toLowerCase().replace(/\s+/g, '-')}`;
+
   return (
-    <Link to={`/producto/${event.event_id}`} className="group block">
+    <Link to={eventUrl} className="group block">
       <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl border-2 border-accent/20 shadow-lg">
           <div className="flex flex-col">
             {/* Main Event Area with Background Image */}
@@ -171,15 +173,10 @@ const EventCard = ({ event }: EventCardProps) => {
 
             {/* Bottom Section with Button */}
             <div className="bg-background px-4 pb-4 flex justify-center items-center">
-              <Button variant="primary" size="lg" className="w-full flex flex-col items-center justify-center py-4 h-auto transition-all duration-300">
-                <div className="flex items-center gap-2">
-                  <span>Entradas</span>
-                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-                  <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
-                </div>
-                {event.has_hotel_offers && (
-                  <span className="text-xs font-semibold mt-1">+ hoteles disponibles</span>
-                )}
+              <Button variant="primary" size="lg" className="w-full flex items-center justify-center gap-2 py-3 h-auto transition-all duration-300">
+                <span>Entradas</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                <span>Desde {event.ticket_cheapest_price?.toFixed(0) || 0}€</span>
               </Button>
             </div>
           </div>
