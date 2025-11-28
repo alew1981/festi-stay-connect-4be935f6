@@ -16,7 +16,7 @@ import { es } from "date-fns/locale";
 import { toast } from "sonner";
 
 const Producto = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { cart, addTickets, addHotel, removeTicket, removeHotel, getTotalPrice, getTotalTickets, clearCart } = useCart();
@@ -24,38 +24,18 @@ const Producto = () => {
   const [showAllTickets, setShowAllTickets] = useState(false);
 
   const { data: eventDetails, isLoading } = useQuery({
-    queryKey: ["event-with-hotels", id],
+    queryKey: ["event-with-hotels", slug],
     queryFn: async () => {
-      // Try to find by event name first (SEO URL)
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from("vw_events_with_hotels")
         .select("*")
-        .ilike("event_name", id!.replace(/-/g, " "))
+        .eq("event_slug", slug)
         .maybeSingle();
-      
-      // Fallback to event_id if not found
-      if (!data) {
-        const result = await supabase
-          .from("vw_events_with_hotels")
-          .select("*")
-          .eq("event_id", id)
-          .maybeSingle();
-        data = result.data;
-        error = result.error;
-      }
       
       if (error) throw error;
       return data;
     }
   });
-
-  // Redirect to SEO-friendly URL if accessed via ID
-  useEffect(() => {
-    if (eventDetails && id && id !== eventDetails.event_name.toLowerCase().replace(/\s+/g, '-')) {
-      const seoUrl = eventDetails.event_name.toLowerCase().replace(/\s+/g, '-');
-      navigate(`/producto/${seoUrl}`, { replace: true });
-    }
-  }, [eventDetails, id, navigate]);
 
   // Clear cart when changing events
   useEffect(() => {
@@ -205,6 +185,7 @@ const Producto = () => {
             onClick={() => toggleFavorite({
               event_id: eventDetails.event_id!,
               event_name: eventDetails.event_name,
+              event_slug: eventDetails.event_slug,
               event_date: eventDetails.event_date || '',
               venue_city: eventDetails.venue_city || '',
               image_url: eventDetails.image_standard_url || ''

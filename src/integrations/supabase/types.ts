@@ -231,6 +231,7 @@ export type Database = {
           seatmap_interactive_overview: boolean | null
           seatmap_static: boolean | null
           seats_available: boolean | null
+          slug: string
           sold_out: boolean | null
           timezone: string | null
           updated_at: string
@@ -287,6 +288,7 @@ export type Database = {
           seatmap_interactive_overview?: boolean | null
           seatmap_static?: boolean | null
           seats_available?: boolean | null
+          slug: string
           sold_out?: boolean | null
           timezone?: string | null
           updated_at?: string
@@ -343,6 +345,7 @@ export type Database = {
           seatmap_interactive_overview?: boolean | null
           seatmap_static?: boolean | null
           seats_available?: boolean | null
+          slug?: string
           sold_out?: boolean | null
           timezone?: string | null
           updated_at?: string
@@ -376,6 +379,7 @@ export type Database = {
           event_date: string | null
           event_id: string | null
           event_name: string | null
+          event_slug: string | null
           event_updated_at: string | null
           event_url: string | null
           has_hotel_offers: boolean | null
@@ -423,6 +427,18 @@ export type Database = {
     Functions: {
       cleanup_old_hotel_prices: { Args: never; Returns: number }
       cleanup_old_price_logs: { Args: never; Returns: number }
+      generate_slug: {
+        Args: { event_id: string; text_input: string }
+        Returns: string
+      }
+      generate_slug_with_city_date: {
+        Args: {
+          city_input: string
+          event_date_input: string
+          text_input: string
+        }
+        Returns: string
+      }
       get_best_hotels_for_event: {
         Args: { p_event_id: string; p_limit?: number }
         Returns: {
