@@ -184,11 +184,11 @@ const Musica = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8 mt-20">
-        <Breadcrumbs />
         
-        <div className="mb-8">
+        <div className="mb-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-2">Géneros Musicales</h1>
-          <p className="text-muted-foreground text-lg">
+          <Breadcrumbs />
+          <p className="text-muted-foreground text-lg mt-2">
             Explora por género musical y descubre eventos increíbles
           </p>
         </div>
