@@ -185,12 +185,18 @@ const Musica = () => {
       
       <main className="container mx-auto px-4 py-8 mt-20">
         
-        <div className="mb-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">Géneros Musicales</h1>
-          <Breadcrumbs />
-          <p className="text-muted-foreground text-lg mt-2">
-            Explora por género musical y descubre eventos increíbles
-          </p>
+        <div className="mb-6">
+          <h1 className="text-4xl md:text-5xl font-black text-foreground mb-6">
+            Géneros Musicales
+          </h1>
+          <div className="mb-8">
+            <Breadcrumbs />
+          </div>
+          <div className="prose prose-lg max-w-none mb-12">
+            <p className="text-muted-foreground leading-relaxed">
+              Explora eventos por género musical. Desde rock, pop y electrónica hasta reggaeton, indie y flamenco. Encuentra conciertos y festivales de tu género favorito en toda España.
+            </p>
+          </div>
         </div>
 
         {/* Filters and Search */}

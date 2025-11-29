@@ -125,6 +125,27 @@ export type Database = {
         }
         Relationships: []
       }
+      lovable_tbl_cities_processed: {
+        Row: {
+          city: string
+          hotels_found: number | null
+          notes: string | null
+          processed_at: string | null
+        }
+        Insert: {
+          city: string
+          hotels_found?: number | null
+          notes?: string | null
+          processed_at?: string | null
+        }
+        Update: {
+          city?: string
+          hotels_found?: number | null
+          notes?: string | null
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       tbl_event_hotel_prices: {
         Row: {
           adults: number | null
@@ -368,12 +389,14 @@ export type Database = {
         Row: {
           attraction_ids: string[] | null
           attraction_names: string[] | null
+          attraction_slug: string | null
           attractions: Json | null
           avg_hotel_price: number | null
           cancelled: boolean | null
           categories: Json | null
           day_of_week: string | null
           estimated_package_savings: number | null
+          event_badges: string[] | null
           event_created_at: string | null
           event_currency: string | null
           event_date: string | null
@@ -448,6 +471,13 @@ export type Database = {
           price: number
           rating: number
           stars: number
+        }[]
+      }
+      get_cities_needing_hotels: {
+        Args: { batch_size: number }
+        Returns: {
+          city: string
+          event_count: number
         }[]
       }
       get_event_hotel_stats_by_city: {

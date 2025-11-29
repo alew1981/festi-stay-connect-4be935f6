@@ -128,12 +128,18 @@ const Eventos = () => {
       <div className="container mx-auto px-4 py-8">
         
         {/* Header */}
-        <div className="mb-4 mt-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">Festivales y Conciertos</h1>
-          <Breadcrumbs />
-          <p className="text-muted-foreground text-lg mt-2">
-            Tus artistas favoritos
-          </p>
+        <div className="mb-6 mt-6">
+          <h1 className="text-4xl md:text-5xl font-black text-foreground mb-6">
+            Festivales y Conciertos
+          </h1>
+          <div className="mb-8">
+            <Breadcrumbs />
+          </div>
+          <div className="prose prose-lg max-w-none mb-12">
+            <p className="text-muted-foreground leading-relaxed">
+              Descubre todos los festivales y conciertos en España. Compra tus entradas y reserva tu hotel en el mismo lugar. Encuentra eventos de todos los géneros y ciudades.
+            </p>
+          </div>
         </div>
 
         {/* Filters and Search */}

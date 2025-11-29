@@ -14,7 +14,7 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -44,7 +44,7 @@ const Navbar = () => {
               className="text-foreground/80 hover:text-foreground transition-colors"
               activeClassName="text-foreground font-semibold"
             >
-              Música
+              Género
             </NavLink>
             <NavLink
               to="/destinos"
@@ -126,7 +126,7 @@ const Navbar = () => {
               activeClassName="text-foreground font-semibold"
               onClick={() => setIsMenuOpen(false)}
             >
-              Música
+              Género
             </NavLink>
             <NavLink
               to="/destinos"
