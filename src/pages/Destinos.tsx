@@ -171,12 +171,18 @@ const Destinos = () => {
       
       <main className="container mx-auto px-4 py-8 mt-20">
         
-        <div className="mb-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">Destinos</h1>
-          <Breadcrumbs />
-          <p className="text-muted-foreground text-lg mt-2">
-            Explora eventos en las mejores ciudades
-          </p>
+        <div className="mb-6">
+          <h1 className="text-4xl md:text-5xl font-black text-foreground mb-6">
+            Destinos
+          </h1>
+          <div className="mb-8">
+            <Breadcrumbs />
+          </div>
+          <div className="prose prose-lg max-w-none mb-12">
+            <p className="text-muted-foreground leading-relaxed">
+              Explora eventos musicales en las mejores ciudades de España. Encuentra conciertos y festivales en Madrid, Barcelona, Valencia y muchas más ciudades. Reserva tu entrada y hotel en un solo lugar.
+            </p>
+          </div>
         </div>
 
         {/* Filters and Search */}
