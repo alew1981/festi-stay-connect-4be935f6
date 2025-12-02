@@ -14,217 +14,559 @@ export type Database = {
   }
   public: {
     Tables: {
+      lite_tbl_city_mapping: {
+        Row: {
+          country_code: string | null
+          created_at: string | null
+          id: number
+          liteapi_city: string
+          notes: string | null
+          place_id: string | null
+          ticketmaster_city: string
+          updated_at: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string | null
+          id?: number
+          liteapi_city: string
+          notes?: string | null
+          place_id?: string | null
+          ticketmaster_city: string
+          updated_at?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string | null
+          id?: number
+          liteapi_city?: string
+          notes?: string | null
+          place_id?: string | null
+          ticketmaster_city?: string
+          updated_at?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
+      lite_tbl_event_hotel_prices: {
+        Row: {
+          adults: number | null
+          checkin_date: string
+          checkout_date: string
+          children: number | null
+          currency: string | null
+          event_id: string
+          fetched_at: string | null
+          hotel_id: string
+          id: number
+          is_available: boolean | null
+          min_price: number | null
+          nights: number
+          suggested_selling_price: number | null
+        }
+        Insert: {
+          adults?: number | null
+          checkin_date: string
+          checkout_date: string
+          children?: number | null
+          currency?: string | null
+          event_id: string
+          fetched_at?: string | null
+          hotel_id: string
+          id?: number
+          is_available?: boolean | null
+          min_price?: number | null
+          nights: number
+          suggested_selling_price?: number | null
+        }
+        Update: {
+          adults?: number | null
+          checkin_date?: string
+          checkout_date?: string
+          children?: number | null
+          currency?: string | null
+          event_id?: string
+          fetched_at?: string | null
+          hotel_id?: string
+          id?: number
+          is_available?: boolean | null
+          min_price?: number | null
+          nights?: number
+          suggested_selling_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_concerts_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_event_hotel_packages"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_events_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_festivals_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "tm_tbl_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "lite_tbl_hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["hotel_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_event_hotel_prices_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "mv_event_hotel_packages"
+            referencedColumns: ["hotel_id"]
+          },
+        ]
+      }
+      lite_tbl_facilities: {
+        Row: {
+          created_at: string | null
+          facility_id: number
+          facility_name_en: string
+          facility_name_es: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          facility_id: number
+          facility_name_en: string
+          facility_name_es: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          facility_id?: number
+          facility_name_en?: string
+          facility_name_es?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      lite_tbl_hotel_rooms: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          hotel_id: string
+          id: number
+          main_photo: string | null
+          max_adults: number
+          max_children: number
+          max_occupancy: number
+          raw_room_data: Json | null
+          room_amenity_ids: number[] | null
+          room_name: string
+          room_size_square: number | null
+          room_size_unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          hotel_id: string
+          id: number
+          main_photo?: string | null
+          max_adults: number
+          max_children: number
+          max_occupancy: number
+          raw_room_data?: Json | null
+          room_amenity_ids?: number[] | null
+          room_name: string
+          room_size_square?: number | null
+          room_size_unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          hotel_id?: string
+          id?: number
+          main_photo?: string | null
+          max_adults?: number
+          max_children?: number
+          max_occupancy?: number
+          raw_room_data?: Json | null
+          room_amenity_ids?: number[] | null
+          room_name?: string
+          room_size_square?: number | null
+          room_size_unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lite_tbl_hotel_rooms_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "lite_tbl_hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_hotel_rooms_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["hotel_id"]
+          },
+          {
+            foreignKeyName: "lite_tbl_hotel_rooms_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "mv_event_hotel_packages"
+            referencedColumns: ["hotel_id"]
+          },
+        ]
+      }
       lite_tbl_hotels: {
         Row: {
-          accessibility_attributes: Json | null
+          active: boolean | null
           address: string | null
-          chain: string | null
+          cached_min_price: number | null
+          cached_price_date: string | null
           chain_id: number | null
+          chain_name: string | null
+          checkin_time: string | null
+          checkout_time: string | null
+          child_allowed: boolean | null
           city: string
           country: string | null
-          created_at: string
+          created_at: string | null
           currency: string | null
           deleted_at: string | null
-          facilities_catalog: Json | null
-          facilities_fetched_at: string | null
           facility_ids: number[] | null
           hotel_description: string | null
           hotel_important_information: string | null
-          hotel_type: string | null
           hotel_type_id: number | null
+          hotel_type_name: string | null
           id: string
           latitude: number | null
           longitude: number | null
           main_photo: string | null
           name: string
-          place_id: string | null
+          parking_available: boolean | null
+          parking_price: number | null
+          parking_type: string | null
+          pets_allowed: boolean | null
           primary_hotel_id: string | null
           rating: number | null
           raw_hotel_data: Json | null
+          raw_images: Json | null
+          raw_policies: Json | null
           review_count: number | null
-          review_last_date: string | null
-          review_score_avg: number | null
-          review_total_count: number | null
-          reviews_fetched_at: string | null
-          reviews_raw: Json | null
+          sentiment_amenities: number | null
+          sentiment_cleanliness: number | null
+          sentiment_cons: string[] | null
+          sentiment_food: number | null
+          sentiment_location: number | null
+          sentiment_overall: number | null
+          sentiment_pros: string[] | null
+          sentiment_room_quality: number | null
+          sentiment_service: number | null
+          sentiment_updated_at: string | null
+          sentiment_value: number | null
+          slug: string | null
           stars: number | null
           thumbnail: string | null
-          updated_at: string
+          ticketmaster_city: string | null
+          updated_at: string | null
           zip: string | null
         }
         Insert: {
-          accessibility_attributes?: Json | null
+          active?: boolean | null
           address?: string | null
-          chain?: string | null
+          cached_min_price?: number | null
+          cached_price_date?: string | null
           chain_id?: number | null
+          chain_name?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
+          child_allowed?: boolean | null
           city: string
           country?: string | null
-          created_at?: string
+          created_at?: string | null
           currency?: string | null
           deleted_at?: string | null
-          facilities_catalog?: Json | null
-          facilities_fetched_at?: string | null
           facility_ids?: number[] | null
           hotel_description?: string | null
           hotel_important_information?: string | null
-          hotel_type?: string | null
           hotel_type_id?: number | null
+          hotel_type_name?: string | null
           id: string
           latitude?: number | null
           longitude?: number | null
           main_photo?: string | null
           name: string
-          place_id?: string | null
+          parking_available?: boolean | null
+          parking_price?: number | null
+          parking_type?: string | null
+          pets_allowed?: boolean | null
           primary_hotel_id?: string | null
           rating?: number | null
           raw_hotel_data?: Json | null
+          raw_images?: Json | null
+          raw_policies?: Json | null
           review_count?: number | null
-          review_last_date?: string | null
-          review_score_avg?: number | null
-          review_total_count?: number | null
-          reviews_fetched_at?: string | null
-          reviews_raw?: Json | null
+          sentiment_amenities?: number | null
+          sentiment_cleanliness?: number | null
+          sentiment_cons?: string[] | null
+          sentiment_food?: number | null
+          sentiment_location?: number | null
+          sentiment_overall?: number | null
+          sentiment_pros?: string[] | null
+          sentiment_room_quality?: number | null
+          sentiment_service?: number | null
+          sentiment_updated_at?: string | null
+          sentiment_value?: number | null
+          slug?: string | null
           stars?: number | null
           thumbnail?: string | null
-          updated_at?: string
+          ticketmaster_city?: string | null
+          updated_at?: string | null
           zip?: string | null
         }
         Update: {
-          accessibility_attributes?: Json | null
+          active?: boolean | null
           address?: string | null
-          chain?: string | null
+          cached_min_price?: number | null
+          cached_price_date?: string | null
           chain_id?: number | null
+          chain_name?: string | null
+          checkin_time?: string | null
+          checkout_time?: string | null
+          child_allowed?: boolean | null
           city?: string
           country?: string | null
-          created_at?: string
+          created_at?: string | null
           currency?: string | null
           deleted_at?: string | null
-          facilities_catalog?: Json | null
-          facilities_fetched_at?: string | null
           facility_ids?: number[] | null
           hotel_description?: string | null
           hotel_important_information?: string | null
-          hotel_type?: string | null
           hotel_type_id?: number | null
+          hotel_type_name?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           main_photo?: string | null
           name?: string
-          place_id?: string | null
+          parking_available?: boolean | null
+          parking_price?: number | null
+          parking_type?: string | null
+          pets_allowed?: boolean | null
           primary_hotel_id?: string | null
           rating?: number | null
           raw_hotel_data?: Json | null
+          raw_images?: Json | null
+          raw_policies?: Json | null
           review_count?: number | null
-          review_last_date?: string | null
-          review_score_avg?: number | null
-          review_total_count?: number | null
-          reviews_fetched_at?: string | null
-          reviews_raw?: Json | null
+          sentiment_amenities?: number | null
+          sentiment_cleanliness?: number | null
+          sentiment_cons?: string[] | null
+          sentiment_food?: number | null
+          sentiment_location?: number | null
+          sentiment_overall?: number | null
+          sentiment_pros?: string[] | null
+          sentiment_room_quality?: number | null
+          sentiment_service?: number | null
+          sentiment_updated_at?: string | null
+          sentiment_value?: number | null
+          slug?: string | null
           stars?: number | null
           thumbnail?: string | null
-          updated_at?: string
+          ticketmaster_city?: string | null
+          updated_at?: string | null
           zip?: string | null
         }
         Relationships: []
       }
-      lovable_tbl_cities_processed: {
+      tm_tbl_attractions: {
         Row: {
-          city: string
-          hotels_found: number | null
-          notes: string | null
-          processed_at: string | null
+          created_at: string | null
+          event_count: number | null
+          id: string
+          image_height: number | null
+          image_url: string | null
+          image_width: number | null
+          name: string
+          primary_category_id: number | null
+          primary_category_name: string | null
+          primary_subcategory_id: number | null
+          primary_subcategory_name: string | null
+          slug: string | null
+          updated_at: string | null
+          url: string | null
         }
         Insert: {
-          city: string
-          hotels_found?: number | null
-          notes?: string | null
-          processed_at?: string | null
+          created_at?: string | null
+          event_count?: number | null
+          id: string
+          image_height?: number | null
+          image_url?: string | null
+          image_width?: number | null
+          name: string
+          primary_category_id?: number | null
+          primary_category_name?: string | null
+          primary_subcategory_id?: number | null
+          primary_subcategory_name?: string | null
+          slug?: string | null
+          updated_at?: string | null
+          url?: string | null
         }
         Update: {
-          city?: string
-          hotels_found?: number | null
-          notes?: string | null
-          processed_at?: string | null
+          created_at?: string | null
+          event_count?: number | null
+          id?: string
+          image_height?: number | null
+          image_url?: string | null
+          image_width?: number | null
+          name?: string
+          primary_category_id?: number | null
+          primary_category_name?: string | null
+          primary_subcategory_id?: number | null
+          primary_subcategory_name?: string | null
+          slug?: string | null
+          updated_at?: string | null
+          url?: string | null
         }
         Relationships: []
       }
-      tbl_event_hotel_prices: {
+      tm_tbl_event_areas: {
         Row: {
-          adults: number | null
-          api_response: Json | null
-          checkin_date: string
-          checkout_date: string
+          area_code: string
+          area_name: string | null
           created_at: string | null
-          currency: string | null
-          event_date: string
           event_id: string
-          event_name: string | null
-          guest_nationality: string | null
-          hotel_id: string
-          hotel_name: string | null
-          id: string
-          price: number
-          price_fetched_at: string | null
-          suggested_selling_price: number | null
-          updated_at: string | null
-          venue_city: string | null
+          id: number
+          price_level_ids: number[] | null
+          price_max_excl_fees: number | null
+          price_max_incl_fees: number | null
+          price_min_excl_fees: number | null
+          price_min_incl_fees: number | null
         }
         Insert: {
-          adults?: number | null
-          api_response?: Json | null
-          checkin_date: string
-          checkout_date: string
+          area_code: string
+          area_name?: string | null
           created_at?: string | null
-          currency?: string | null
-          event_date: string
           event_id: string
-          event_name?: string | null
-          guest_nationality?: string | null
-          hotel_id: string
-          hotel_name?: string | null
-          id?: string
-          price: number
-          price_fetched_at?: string | null
-          suggested_selling_price?: number | null
-          updated_at?: string | null
-          venue_city?: string | null
+          id?: number
+          price_level_ids?: number[] | null
+          price_max_excl_fees?: number | null
+          price_max_incl_fees?: number | null
+          price_min_excl_fees?: number | null
+          price_min_incl_fees?: number | null
         }
         Update: {
-          adults?: number | null
-          api_response?: Json | null
-          checkin_date?: string
-          checkout_date?: string
+          area_code?: string
+          area_name?: string | null
           created_at?: string | null
-          currency?: string | null
-          event_date?: string
           event_id?: string
-          event_name?: string | null
-          guest_nationality?: string | null
-          hotel_id?: string
-          hotel_name?: string | null
-          id?: string
-          price?: number
-          price_fetched_at?: string | null
-          suggested_selling_price?: number | null
-          updated_at?: string | null
-          venue_city?: string | null
+          id?: number
+          price_level_ids?: number[] | null
+          price_max_excl_fees?: number | null
+          price_max_incl_fees?: number | null
+          price_min_excl_fees?: number | null
+          price_min_incl_fees?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tm_tbl_event_areas_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "lovable_mv_event_product_page"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_event_areas_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_concerts_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_event_areas_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_event_hotel_packages"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_event_areas_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_events_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_event_areas_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mv_festivals_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tbl_event_areas_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "tm_tbl_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tm_tbl_events: {
         Row: {
           attraction_ids: string[] | null
           attraction_names: string[] | null
-          attractions: Json | null
-          attractions_enriched: Json | null
           cancelled: boolean | null
           categories: Json | null
-          created_at: string
+          created_at: string | null
           currency: string | null
           day_of_week: string | null
           domain: string | null
-          event_date: string | null
+          door_opening_date: string | null
+          event_date: string
+          event_type: string | null
           external_url: boolean | null
           id: string
           image_large_height: number | null
@@ -233,8 +575,10 @@ export type Database = {
           image_standard_height: number | null
           image_standard_url: string | null
           image_standard_width: number | null
+          is_festival: boolean | null
           is_package: boolean | null
           local_event_date: string | null
+          minimum_age_required: number | null
           name: string
           off_sale_date: string | null
           on_sale_date: string | null
@@ -242,11 +586,20 @@ export type Database = {
           price_max_incl_fees: number | null
           price_min_excl_fees: number | null
           price_min_incl_fees: number | null
-          prices: Json | null
-          promoter_address: Json | null
+          primary_attraction_id: string | null
+          primary_attraction_name: string | null
+          primary_category_id: number | null
+          primary_category_name: string | null
+          primary_subcategory_id: number | null
+          primary_subcategory_name: string | null
+          promoter_address_line_1: string | null
+          promoter_city: string | null
           promoter_code: string | null
-          promoter_id: number | null
+          promoter_country: string | null
+          promoter_id: string | null
           promoter_name: string | null
+          promoter_postal_code: string | null
+          promoter_state: string | null
           raw_event_data: Json | null
           raw_prices_data: Json | null
           rescheduled: boolean | null
@@ -255,13 +608,15 @@ export type Database = {
           seatmap_interactive_overview: boolean | null
           seatmap_static: boolean | null
           seats_available: boolean | null
-          slug: string
+          secondary_attraction_id: string | null
+          secondary_attraction_name: string | null
+          slug: string | null
           sold_out: boolean | null
           timezone: string | null
-          updated_at: string
+          updated_at: string | null
           url: string | null
           venue_address: string | null
-          venue_city: string | null
+          venue_city: string
           venue_country: string | null
           venue_id: string | null
           venue_latitude: number | null
@@ -273,15 +628,15 @@ export type Database = {
         Insert: {
           attraction_ids?: string[] | null
           attraction_names?: string[] | null
-          attractions?: Json | null
-          attractions_enriched?: Json | null
           cancelled?: boolean | null
           categories?: Json | null
-          created_at?: string
+          created_at?: string | null
           currency?: string | null
           day_of_week?: string | null
           domain?: string | null
-          event_date?: string | null
+          door_opening_date?: string | null
+          event_date: string
+          event_type?: string | null
           external_url?: boolean | null
           id: string
           image_large_height?: number | null
@@ -290,8 +645,10 @@ export type Database = {
           image_standard_height?: number | null
           image_standard_url?: string | null
           image_standard_width?: number | null
+          is_festival?: boolean | null
           is_package?: boolean | null
           local_event_date?: string | null
+          minimum_age_required?: number | null
           name: string
           off_sale_date?: string | null
           on_sale_date?: string | null
@@ -299,11 +656,20 @@ export type Database = {
           price_max_incl_fees?: number | null
           price_min_excl_fees?: number | null
           price_min_incl_fees?: number | null
-          prices?: Json | null
-          promoter_address?: Json | null
+          primary_attraction_id?: string | null
+          primary_attraction_name?: string | null
+          primary_category_id?: number | null
+          primary_category_name?: string | null
+          primary_subcategory_id?: number | null
+          primary_subcategory_name?: string | null
+          promoter_address_line_1?: string | null
+          promoter_city?: string | null
           promoter_code?: string | null
-          promoter_id?: number | null
+          promoter_country?: string | null
+          promoter_id?: string | null
           promoter_name?: string | null
+          promoter_postal_code?: string | null
+          promoter_state?: string | null
           raw_event_data?: Json | null
           raw_prices_data?: Json | null
           rescheduled?: boolean | null
@@ -312,13 +678,15 @@ export type Database = {
           seatmap_interactive_overview?: boolean | null
           seatmap_static?: boolean | null
           seats_available?: boolean | null
-          slug: string
+          secondary_attraction_id?: string | null
+          secondary_attraction_name?: string | null
+          slug?: string | null
           sold_out?: boolean | null
           timezone?: string | null
-          updated_at?: string
+          updated_at?: string | null
           url?: string | null
           venue_address?: string | null
-          venue_city?: string | null
+          venue_city: string
           venue_country?: string | null
           venue_id?: string | null
           venue_latitude?: number | null
@@ -330,15 +698,15 @@ export type Database = {
         Update: {
           attraction_ids?: string[] | null
           attraction_names?: string[] | null
-          attractions?: Json | null
-          attractions_enriched?: Json | null
           cancelled?: boolean | null
           categories?: Json | null
-          created_at?: string
+          created_at?: string | null
           currency?: string | null
           day_of_week?: string | null
           domain?: string | null
-          event_date?: string | null
+          door_opening_date?: string | null
+          event_date?: string
+          event_type?: string | null
           external_url?: boolean | null
           id?: string
           image_large_height?: number | null
@@ -347,8 +715,10 @@ export type Database = {
           image_standard_height?: number | null
           image_standard_url?: string | null
           image_standard_width?: number | null
+          is_festival?: boolean | null
           is_package?: boolean | null
           local_event_date?: string | null
+          minimum_age_required?: number | null
           name?: string
           off_sale_date?: string | null
           on_sale_date?: string | null
@@ -356,11 +726,20 @@ export type Database = {
           price_max_incl_fees?: number | null
           price_min_excl_fees?: number | null
           price_min_incl_fees?: number | null
-          prices?: Json | null
-          promoter_address?: Json | null
+          primary_attraction_id?: string | null
+          primary_attraction_name?: string | null
+          primary_category_id?: number | null
+          primary_category_name?: string | null
+          primary_subcategory_id?: number | null
+          primary_subcategory_name?: string | null
+          promoter_address_line_1?: string | null
+          promoter_city?: string | null
           promoter_code?: string | null
-          promoter_id?: number | null
+          promoter_country?: string | null
+          promoter_id?: string | null
           promoter_name?: string | null
+          promoter_postal_code?: string | null
+          promoter_state?: string | null
           raw_event_data?: Json | null
           raw_prices_data?: Json | null
           rescheduled?: boolean | null
@@ -369,13 +748,15 @@ export type Database = {
           seatmap_interactive_overview?: boolean | null
           seatmap_static?: boolean | null
           seats_available?: boolean | null
-          slug?: string
+          secondary_attraction_id?: string | null
+          secondary_attraction_name?: string | null
+          slug?: string | null
           sold_out?: boolean | null
           timezone?: string | null
-          updated_at?: string
+          updated_at?: string | null
           url?: string | null
           venue_address?: string | null
-          venue_city?: string | null
+          venue_city?: string
           venue_country?: string | null
           venue_id?: string | null
           venue_latitude?: number | null
@@ -388,163 +769,286 @@ export type Database = {
       }
     }
     Views: {
-      vw_events_with_hotels: {
+      lovable_mv_event_product_page: {
         Row: {
-          attraction_ids: string[] | null
           attraction_names: string[] | null
-          attraction_slug: string | null
-          attractions: Json | null
-          avg_hotel_price: number | null
           cancelled: boolean | null
-          categories: Json | null
+          checkin_time: string | null
+          checkout_time: string | null
+          child_allowed: boolean | null
           day_of_week: string | null
-          estimated_package_savings: number | null
+          distance_badge: string | null
+          distance_km: number | null
           event_badges: string[] | null
           event_created_at: string | null
-          event_currency: string | null
           event_date: string | null
           event_id: string | null
+          event_image_large: string | null
+          event_image_standard: string | null
           event_name: string | null
           event_slug: string | null
+          event_ticketmaster_url: string | null
+          event_type: string | null
           event_updated_at: string | null
-          event_url: string | null
-          has_hotel_offers: boolean | null
-          hotels: Json | null
-          hotels_count: number | null
-          hotels_last_updated: string | null
-          image_large_height: number | null
-          image_large_url: string | null
-          image_large_width: number | null
-          image_standard_url: string | null
+          hotel_address: string | null
+          hotel_badges: string[] | null
+          hotel_chain: string | null
+          hotel_city: string | null
+          hotel_currency: string | null
+          hotel_description: string | null
+          hotel_facilities: number[] | null
+          hotel_id: string | null
+          hotel_important_information: string | null
+          hotel_latitude: number | null
+          hotel_longitude: number | null
+          hotel_main_photo: string | null
+          hotel_min_price: number | null
+          hotel_name: string | null
+          hotel_rating: number | null
+          hotel_reviews: number | null
+          hotel_selling_price: number | null
+          hotel_slug: string | null
+          hotel_stars: number | null
+          hotel_thumbnail: string | null
+          hotel_type: string | null
+          hotel_updated_at: string | null
+          is_festival: boolean | null
           local_event_date: string | null
-          max_hotel_price: number | null
-          min_hotel_price: number | null
           off_sale_date: string | null
           on_sale_date: string | null
-          package_price_max: number | null
-          package_price_min: number | null
-          promoter_address: Json | null
-          promoter_code: string | null
-          promoter_name: string | null
-          rescheduled: boolean | null
+          package_adults: number | null
+          package_available: boolean | null
+          package_checkin: string | null
+          package_checkout: string | null
+          package_children: number | null
+          package_nights: number | null
+          parking_available: boolean | null
+          parking_price: number | null
+          parking_type: string | null
+          pets_allowed: boolean | null
+          price_updated_at: string | null
+          primary_attraction_id: string | null
+          primary_attraction_name: string | null
+          primary_category_name: string | null
+          primary_subcategory_name: string | null
           schedule_status: string | null
           seats_available: boolean | null
+          secondary_attraction_id: string | null
+          secondary_attraction_name: string | null
+          sentiment_amenities: number | null
+          sentiment_cleanliness: number | null
+          sentiment_cons: string[] | null
+          sentiment_food: number | null
+          sentiment_location: number | null
+          sentiment_overall: number | null
+          sentiment_pros: string[] | null
+          sentiment_room_quality: number | null
+          sentiment_service: number | null
+          sentiment_value: number | null
           sold_out: boolean | null
-          ticket_cheapest_price: number | null
+          ticket_areas: Json | null
+          ticket_areas_count: number | null
+          ticket_currency: string | null
           ticket_price_max: number | null
-          ticket_price_max_no_fees: number | null
           ticket_price_min: number | null
-          ticket_price_min_no_fees: number | null
-          ticket_prices_detail: Json | null
           timezone: string | null
+          total_package_price: number | null
           venue_address: string | null
           venue_city: string | null
-          venue_country: string | null
           venue_id: string | null
           venue_latitude: number | null
           venue_longitude: number | null
           venue_name: string | null
           venue_postal_code: string | null
-          venue_url: string | null
+        }
+        Relationships: []
+      }
+      mv_artists_cards: {
+        Row: {
+          artist_id: string | null
+          artist_name: string | null
+          artist_slug: string | null
+          cities: string[] | null
+          event_count: number | null
+          genre: string | null
+          image_url: string | null
+          next_event_date: string | null
+          upcoming_events_count: number | null
+        }
+        Relationships: []
+      }
+      mv_concerts_cards: {
+        Row: {
+          artist_name: string | null
+          badges: string[] | null
+          currency: string | null
+          day_of_week: string | null
+          event_date: string | null
+          genre: string | null
+          id: string | null
+          image_large_url: string | null
+          image_standard_url: string | null
+          name: string | null
+          price_max_incl_fees: number | null
+          price_min_incl_fees: number | null
+          slug: string | null
+          sold_out: boolean | null
+          url: string | null
+          venue_city: string | null
+          venue_name: string | null
+        }
+        Relationships: []
+      }
+      mv_destinations_cards: {
+        Row: {
+          city_name: string | null
+          concerts_count: number | null
+          event_count: number | null
+          festivals_count: number | null
+          genres: string[] | null
+          next_event_date: string | null
+          price_from: number | null
+          price_to: number | null
+          sample_image_url: string | null
+        }
+        Relationships: []
+      }
+      mv_event_hotel_packages: {
+        Row: {
+          checkin_date: string | null
+          checkout_date: string | null
+          distance_km: number | null
+          event_city: string | null
+          event_date: string | null
+          event_id: string | null
+          event_image: string | null
+          event_name: string | null
+          event_price_max: number | null
+          event_price_min: number | null
+          event_slug: string | null
+          hotel_address: string | null
+          hotel_city: string | null
+          hotel_id: string | null
+          hotel_image: string | null
+          hotel_lat: number | null
+          hotel_lng: number | null
+          hotel_name: string | null
+          hotel_price: number | null
+          hotel_rating: number | null
+          hotel_reviews: number | null
+          hotel_slug: string | null
+          hotel_stars: number | null
+          hotel_suggested_price: number | null
+          nights: number | null
+          package_badges: string[] | null
+          package_price_max: number | null
+          package_price_min: number | null
+          price_updated_at: string | null
+          primary_attraction_name: string | null
+          venue_name: string | null
+        }
+        Relationships: []
+      }
+      mv_events_cards: {
+        Row: {
+          attraction_names: string[] | null
+          badges: string[] | null
+          currency: string | null
+          day_of_week: string | null
+          event_date: string | null
+          event_type: string | null
+          id: string | null
+          image_large_url: string | null
+          image_standard_url: string | null
+          is_festival: boolean | null
+          name: string | null
+          price_max_incl_fees: number | null
+          price_min_incl_fees: number | null
+          primary_attraction_id: string | null
+          primary_attraction_name: string | null
+          primary_category_name: string | null
+          primary_subcategory_name: string | null
+          seats_available: boolean | null
+          secondary_attraction_name: string | null
+          slug: string | null
+          sold_out: boolean | null
+          url: string | null
+          venue_city: string | null
+          venue_country: string | null
+          venue_name: string | null
+        }
+        Relationships: []
+      }
+      mv_festivals_cards: {
+        Row: {
+          attraction_names: string[] | null
+          badges: string[] | null
+          currency: string | null
+          day_of_week: string | null
+          event_date: string | null
+          id: string | null
+          image_large_url: string | null
+          image_standard_url: string | null
+          main_attraction: string | null
+          name: string | null
+          price_max_incl_fees: number | null
+          price_min_incl_fees: number | null
+          secondary_attraction_name: string | null
+          slug: string | null
+          sold_out: boolean | null
+          url: string | null
+          venue_city: string | null
+          venue_name: string | null
+        }
+        Relationships: []
+      }
+      mv_genres_cards: {
+        Row: {
+          cities: string[] | null
+          event_count: number | null
+          genre_id: number | null
+          genre_name: string | null
+          next_event_date: string | null
+          sample_image_url: string | null
         }
         Relationships: []
       }
     }
     Functions: {
-      cleanup_old_hotel_prices: { Args: never; Returns: number }
-      cleanup_old_price_logs: { Args: never; Returns: number }
-      generate_slug: {
-        Args: { event_id: string; text_input: string }
-        Returns: string
-      }
-      generate_slug_with_city_date: {
+      calculate_event_badges: {
         Args: {
-          city_input: string
-          event_date_input: string
-          text_input: string
+          p_cancelled: boolean
+          p_day_of_week: string
+          p_event_date: string
+          p_event_type: string
+          p_is_package: boolean
+          p_minimum_age_required: number
+          p_price_max_incl_fees: number
+          p_price_min_incl_fees: number
+          p_primary_attraction_name: string
+          p_primary_subcategory_name: string
+          p_rescheduled: boolean
+          p_seatmap_interactive_detailed: boolean
+          p_seatmap_static: boolean
+          p_seats_available: boolean
+          p_sold_out: boolean
+          p_venue_city: string
         }
-        Returns: string
+        Returns: string[]
       }
-      get_best_hotels_for_event: {
-        Args: { p_event_id: string; p_limit?: number }
+      calculate_hotel_nights: {
+        Args: { event_date: string }
         Returns: {
-          city: string
-          hotel_id: string
-          hotel_name: string
-          price: number
-          rating: number
-          stars: number
+          checkin_date: string
+          checkout_date: string
+          nights: number
         }[]
       }
-      get_cities_needing_hotels: {
-        Args: { batch_size: number }
-        Returns: {
-          city: string
-          event_count: number
-        }[]
-      }
-      get_event_hotel_stats_by_city: {
-        Args: never
-        Returns: {
-          ciudad: string
-          eventos_con_hoteles: number
-          eventos_sin_hoteles: number
-          hoteles_disponibles_promedio: number
-          pais: string
-          porcentaje_con_hoteles: number
-          total_eventos: number
-        }[]
-      }
-      get_event_price_range: {
-        Args: { p_domain_id: string; p_event_id: string }
-        Returns: {
-          avg_price: number
-          currency: string
-          max_price: number
-          min_price: number
-          price_count: number
-        }[]
-      }
-      get_events_with_hotels_in_city: {
-        Args: { p_city_name: string; p_limit?: number }
-        Returns: {
-          event_id: string
-          hotels_count: number
-          max_price: number
-          min_price: number
-        }[]
-      }
-      get_events_without_hotel_prices: {
-        Args: { limit_count: number }
-        Returns: {
-          domain_id: string
-          event_date: string
-          event_id: string
-          name: string
-          venue_city: string
-          venue_country: string
-        }[]
-      }
-      get_hotel_city_and_country_for_event: {
-        Args: { p_event_city: string; p_event_country: string }
-        Returns: Record<string, unknown>
-      }
-      get_hotel_city_for_event: {
-        Args: { p_event_city: string; p_event_country: string }
-        Returns: string
-      }
-      get_hotel_sync_summary: {
-        Args: never
-        Returns: {
-          metrica: string
-          porcentaje: number
-          valor: number
-        }[]
-      }
-      lovable_fn_refresh_view: { Args: never; Returns: undefined }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
-      unaccent_string: { Args: { "": string }; Returns: string }
+      earth: { Args: never; Returns: number }
+      get_event_badges: { Args: { event_id: string }; Returns: string[] }
+      refresh_all_event_views: { Args: never; Returns: undefined }
+      refresh_hotel_packages_view: { Args: never; Returns: undefined }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
